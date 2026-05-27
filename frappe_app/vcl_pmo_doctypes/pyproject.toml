@@ -1,0 +1,26 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "vcl_pmo_doctypes"
+authors = [
+  { name = "Vimit Converters Limited", email = "it@vcl.local" }
+]
+description = "VCL PMO doctypes, UAT/OAT records, sync logs, and native Frappe API methods."
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/tjharia93/vcl-pmo"
+
+[tool.bench]
+app_name = "vcl_pmo_doctypes"
+
+[tool.flit.module]
+name = "vcl_pmo_doctypes"
+
+[tool.setuptools.package-data]
+vcl_pmo_doctypes = ["**/*"]

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vcl_pmo_doctypes"
+version = "0.1.0"
+description = "VCL PMO doctypes, UAT/OAT records, sync logs, and native Frappe API methods."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Vimit Converters Limited", email = "it@vcl.local" }
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/tjharia93/vcl-pmo"
+
+[tool.bench]
+app_name = "vcl_pmo_doctypes"
+
+[tool.setuptools.packages.find]
+where = ["frappe_app/vcl_pmo_doctypes"]
+include = ["vcl_pmo_doctypes*"]
+
+[tool.setuptools.package-data]
+vcl_pmo_doctypes = ["**/*"]
