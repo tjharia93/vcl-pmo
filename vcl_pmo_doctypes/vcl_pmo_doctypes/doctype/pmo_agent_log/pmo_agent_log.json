@@ -5,16 +5,61 @@
   "custom": 0,
   "is_submittable": 1,
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "delete": 1},
-    {"role": "PMO User", "read": 1, "write": 1, "create": 1}
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
   ],
   "fields": [
-    {"fieldname": "requirement", "label": "Requirement", "fieldtype": "Link", "options": "PMO Requirement"},
-    {"fieldname": "project", "label": "Project", "fieldtype": "Link", "options": "PMO Project"},
-    {"fieldname": "agent", "label": "Agent", "fieldtype": "Data"},
-    {"fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "dispatched\nin_progress\ndone\nfailed\nDone\nIn Progress"},
-    {"fieldname": "notes", "label": "Notes", "fieldtype": "Long Text"},
-    {"fieldname": "files_changed", "label": "Files Changed", "fieldtype": "Long Text"},
-    {"fieldname": "ts", "label": "Timestamp", "fieldtype": "Datetime", "default": "Now"}
+    {
+      "fieldname": "requirement",
+      "label": "Requirement",
+      "fieldtype": "Link",
+      "options": "PMO Requirement"
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project"
+    },
+    {
+      "fieldname": "agent",
+      "label": "Agent",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "dispatched\nin_progress\ndone\nfailed"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "files_changed",
+      "label": "Files Changed",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "ts",
+      "label": "Timestamp",
+      "fieldtype": "Datetime",
+      "default": "Now"
+    }
   ]
 }
