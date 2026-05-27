@@ -10,7 +10,8 @@ The VCL Programme Management Office — code, context, and design references in 
 | `briefs/` | Build briefs, change requests, decisions. Source of truth for what's being built. |
 | `context/projects/<pid>/<rid>.md` | Per-requirement Markdown work logs, written by AI agents on completion. |
 | `mockups/` | Interactive design references (4 paradigms). **Steel + Pulse fusion is locked** for the build. |
-| `frappe_app/` | Custom Frappe app `vcl_pmo_doctypes` for the `PMO Requirement` + `PMO Project` doctypes. Installed on `vcl.frappe.cloud`. |
+| `frappe_app/` | Custom Frappe app `vcl_pmo_doctypes` for PMO doctypes, native API methods, UAT/OAT, and sync logs. Installed on Frappe Cloud. |
+| `docs/` | Testing documentation and n8n Excel sync contract for the Frappe-native migration. |
 
 ## The two-anchor model
 
@@ -36,4 +37,16 @@ open http://vcl-intranet:8500/pmo
 
 ## Access
 
-System users only (CFO + IT). Enforced at the intranet shell + the custom doctypes' permission rules.
+System users only (CFO + IT). Enforced at the intranet shell during the reference phase and by Frappe roles in the native phase.
+
+
+
+## Frappe-native migration
+
+The migration target is `https://vimitconverters.frappe.cloud/app/pmo`.
+
+See:
+
+- [`briefs/2026-05-27_FRAPPE_NATIVE_PMO_MIGRATION.md`](briefs/2026-05-27_FRAPPE_NATIVE_PMO_MIGRATION.md)
+- [`docs/PMO_TESTING.md`](docs/PMO_TESTING.md)
+- [`docs/N8N_EXCEL_SYNC_CONTRACT.md`](docs/N8N_EXCEL_SYNC_CONTRACT.md)
