@@ -1,0 +1,80 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Plan Item",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "item_type",
+      "label": "Item Type",
+      "fieldtype": "Select",
+      "options": "Milestone\nRequirement\nTask\nRAID\nShift",
+      "reqd": 1,
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "columns": 3
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Small Text",
+      "in_list_view": 1,
+      "columns": 3
+    },
+    {
+      "fieldname": "metadata",
+      "label": "Metadata (JSON)",
+      "fieldtype": "Long Text",
+      "description": "JSON object with type-specific fields: Milestone target_date/weight; RAID severity/probability/raid_type; Task start_date/end_date; Shift planned_start/planned_end/shift_type"
+    },
+    {
+      "fieldname": "needs_uat",
+      "label": "UAT",
+      "fieldtype": "Check",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "needs_oat",
+      "label": "OAT",
+      "fieldtype": "Check",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "assignee_hint",
+      "label": "Assignee Hint",
+      "fieldtype": "Select",
+      "options": "unassigned\nclaude\ncodex\nhuman",
+      "default": "unassigned",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "promoted_to_doctype",
+      "label": "Promoted To Doctype",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "promoted_to_name",
+      "label": "Promoted To Name",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "promoted_at",
+      "label": "Promoted At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ]
+}

@@ -30,4 +30,6 @@ doc_events = {
         ]
     },
     "PMO Document": {"on_update": "vcl_pmo_doctypes.webhooks.enqueue_excel_sync"},
+    "PMO Plan": {"on_update": "vcl_pmo_doctypes.webhooks.enqueue_excel_sync"},
+    "PMO Shift": {"on_update": "vcl_pmo_doctypes.webhooks.enqueue_excel_sync"},
 }

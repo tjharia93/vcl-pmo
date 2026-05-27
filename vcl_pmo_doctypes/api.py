@@ -439,3 +439,410 @@ def seed_phase2():
             "last_reviewed": today(),
         }))
     return {"ok": True, "results": results}
+
+
+# ============================================================================
+# Plan & Shift APIs
+# ============================================================================
+
+ALLOWED_ASSIGNEES = {"claude", "codex", "human"}
+
+
+def _next_id(prefix, doctype, width=4):
+    count = frappe.db.count(doctype) + 1
+    return f"{prefix}-{count:0{width}d}"
+
+
+def _parse_metadata(raw):
+    if not raw:
+        return {}
+    if isinstance(raw, dict):
+        return raw
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {}
+
+
+@frappe.whitelist()
+def create_plan(project_id, title, description="", items=None):
+    _require_pmo_user()
+    project_name = _project_name(project_id)
+    if not frappe.db.exists("PMO Project", project_name):
+        frappe.throw(f"PMO Project not found: {project_id}")
+    if isinstance(items, str):
+        items = json.loads(items)
+    items = items or []
+    plan_id = _next_id("PLAN", "PMO Plan")
+    doc = frappe.get_doc({
+        "doctype": "PMO Plan",
+        "plan_id": plan_id,
+        "project": project_name,
+        "title": title,
+        "description": description,
+        "planner": frappe.session.user,
+        "status": "Draft",
+        "proposed_items": [
+            {
+                "item_type": it.get("item_type", "Shift"),
+                "title": it.get("title", ""),
+                "description": it.get("description", ""),
+                "metadata": json.dumps(it.get("metadata", {})) if isinstance(it.get("metadata"), dict) else (it.get("metadata") or ""),
+                "needs_uat": 1 if it.get("needs_uat") else 0,
+                "needs_oat": 1 if it.get("needs_oat") else 0,
+                "assignee_hint": it.get("assignee_hint", "unassigned"),
+            }
+            for it in items
+        ],
+    })
+    doc.insert(ignore_permissions=False)
+    return {"ok": True, "plan_id": doc.plan_id, "name": doc.name}
+
+
+@frappe.whitelist()
+def add_plan_items(plan_id, items=None):
+    """Append additional proposed items to an existing plan."""
+    _require_pmo_user()
+    if isinstance(items, str):
+        items = json.loads(items)
+    items = items or []
+    plan_name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    plan = frappe.get_doc("PMO Plan", plan_name)
+    for it in items:
+        plan.append("proposed_items", {
+            "item_type": it.get("item_type", "Shift"),
+            "title": it.get("title", ""),
+            "description": it.get("description", ""),
+            "metadata": json.dumps(it.get("metadata", {})) if isinstance(it.get("metadata"), dict) else (it.get("metadata") or ""),
+            "needs_uat": 1 if it.get("needs_uat") else 0,
+            "needs_oat": 1 if it.get("needs_oat") else 0,
+            "assignee_hint": it.get("assignee_hint", "unassigned"),
+        })
+    plan.save(ignore_permissions=False)
+    return {"ok": True, "plan": plan.name, "item_count": len(plan.proposed_items)}
+
+
+@frappe.whitelist()
+def allocate_plan_items(plan_id, item_indices=None, assignee=None, planned_start=None, planned_end=None):
+    _require_pmo_user()
+    if isinstance(item_indices, str):
+        item_indices = json.loads(item_indices)
+    plan_name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    plan = frappe.get_doc("PMO Plan", plan_name)
+    project_name = plan.project
+    indices = set(int(i) for i in (item_indices or []))
+    created = []
+    for i, item in enumerate(plan.proposed_items):
+        if indices and i not in indices:
+            continue
+        if item.promoted_to_doctype:
+            continue  # already allocated
+        effective_assignee = assignee or (item.assignee_hint if item.assignee_hint in ALLOWED_ASSIGNEES else None)
+        metadata = _parse_metadata(item.metadata)
+        if planned_start and "planned_start" not in metadata:
+            metadata["planned_start"] = planned_start
+        if planned_end and "planned_end" not in metadata:
+            metadata["planned_end"] = planned_end
+        spawned = _spawn_from_plan_item(plan, item, project_name, metadata, effective_assignee)
+        if not spawned:
+            continue
+        item.promoted_to_doctype = spawned["doctype"]
+        item.promoted_to_name = spawned["name"]
+        item.promoted_at = now_datetime()
+        uat_case = None
+        oat_check = None
+        if item.needs_uat:
+            uat_case = _autocreate_uat_for_promoted(spawned, item, plan)
+        if item.needs_oat:
+            oat_check = _autocreate_oat_for_promoted(spawned, item, plan)
+        if spawned["doctype"] == "PMO Shift" and (uat_case or oat_check):
+            updates = {}
+            if uat_case:
+                updates["uat_case"] = uat_case
+            if oat_check:
+                updates["oat_check"] = oat_check
+            frappe.db.set_value("PMO Shift", spawned["name"], updates)
+        created.append({**spawned, "uat_case": uat_case, "oat_check": oat_check})
+    if created and plan.status in {"Draft", "Proposed"}:
+        plan.status = "Allocated"
+    plan.save(ignore_permissions=False)
+    return {"ok": True, "plan": plan.name, "created": created}
+
+
+def _spawn_from_plan_item(plan, item, project_name, metadata, assignee):
+    if item.item_type == "Milestone":
+        ms_id = _next_id("MS-AUTO", "PMO Milestone")
+        doc = frappe.get_doc({
+            "doctype": "PMO Milestone",
+            "milestone_id": ms_id,
+            "project": project_name,
+            "milestone_name": item.title,
+            "description": item.description or "",
+            "target_date": metadata.get("target_date") or today(),
+            "status": metadata.get("status", "Not Started"),
+            "weight": metadata.get("weight", 0),
+            "milestone_owner": frappe.session.user,
+        })
+        doc.insert(ignore_permissions=False)
+        return {"doctype": "PMO Milestone", "name": doc.name}
+    if item.item_type == "Requirement":
+        prefix = (frappe.db.get_value("PMO Project", project_name, "project_short") or "X").upper()
+        req_id = _next_id(f"REQ-{prefix}", "PMO Requirement")
+        doc = frappe.get_doc({
+            "doctype": "PMO Requirement",
+            "requirement_id": req_id,
+            "project": project_name,
+            "area": metadata.get("area", "Plan"),
+            "requirement": item.title,
+            "priority": metadata.get("priority", "Should"),
+            "status": "Not Started",
+            "needs_action": 1,
+            "note": item.description or "",
+        })
+        doc.insert(ignore_permissions=False)
+        return {"doctype": "PMO Requirement", "name": doc.name}
+    if item.item_type == "Task":
+        task_id = _next_id("T-AUTO", "PMO Task")
+        doc = frappe.get_doc({
+            "doctype": "PMO Task",
+            "task_id": task_id,
+            "project": project_name,
+            "title": item.title,
+            "description": item.description or "",
+            "start_date": metadata.get("start_date") or today(),
+            "end_date": metadata.get("end_date") or today(),
+            "status": "Not Started",
+            "assignee": frappe.session.user,
+            "percent_complete": 0,
+        })
+        doc.insert(ignore_permissions=False)
+        return {"doctype": "PMO Task", "name": doc.name}
+    if item.item_type == "RAID":
+        raid_id = _next_id("RAID-AUTO", "PMO RAID Item")
+        doc = frappe.get_doc({
+            "doctype": "PMO RAID Item",
+            "raid_id": raid_id,
+            "project": project_name,
+            "type": metadata.get("raid_type", "Risk"),
+            "title": item.title,
+            "description": item.description or "",
+            "severity": metadata.get("severity", "Medium"),
+            "probability": metadata.get("probability", "Medium"),
+            "status": "Open",
+            "raid_owner": frappe.session.user,
+            "raised_date": today(),
+        })
+        doc.insert(ignore_permissions=False)
+        return {"doctype": "PMO RAID Item", "name": doc.name}
+    if item.item_type == "Shift":
+        if not assignee:
+            frappe.throw(f"Shift item '{item.title}' requires an assignee (claude/codex/human). Pass assignee= or set assignee_hint on the plan item.")
+        shift_id = _next_id("SHIFT", "PMO Shift")
+        doc = frappe.get_doc({
+            "doctype": "PMO Shift",
+            "shift_id": shift_id,
+            "project": project_name,
+            "title": item.title,
+            "description": item.description or "",
+            "shift_type": metadata.get("shift_type", "Execution"),
+            "assigned_to": assignee,
+            "status": "Allocated",
+            "planned_start": metadata.get("planned_start") or None,
+            "planned_end": metadata.get("planned_end") or None,
+            "requires_uat": 1 if item.needs_uat else 0,
+            "requires_oat": 1 if item.needs_oat else 0,
+            "linked_plan": plan.name,
+        })
+        doc.insert(ignore_permissions=False)
+        return {"doctype": "PMO Shift", "name": doc.name}
+    return None
+
+
+def _autocreate_uat_for_promoted(spawned, item, plan):
+    if spawned["doctype"] == "PMO Shift":
+        return None  # handled by PMOShift.before_save controller
+    prefix = (frappe.db.get_value("PMO Project", plan.project, "project_short") or "X").upper()
+    case_id = _next_id(f"UAT-{prefix}-PLAN", "PMO UAT Case")
+    doc = frappe.get_doc({
+        "doctype": "PMO UAT Case",
+        "uat_case_id": case_id,
+        "project": plan.project,
+        "description": f"UAT for {spawned['doctype']} {spawned['name']}: {item.title}",
+        "acceptance_criteria": item.description or "",
+    })
+    doc.insert(ignore_permissions=False)
+    return doc.name
+
+
+def _autocreate_oat_for_promoted(spawned, item, plan):
+    if spawned["doctype"] == "PMO Shift":
+        return None  # handled by PMOShift.before_save controller
+    prefix = (frappe.db.get_value("PMO Project", plan.project, "project_short") or "X").upper()
+    check_id = _next_id(f"OAT-{prefix}-PLAN", "PMO OAT Check")
+    doc = frappe.get_doc({
+        "doctype": "PMO OAT Check",
+        "check_id": check_id,
+        "project": plan.project,
+        "area": item.item_type,
+        "check": f"OAT for {spawned['doctype']} {spawned['name']}: {item.title}",
+        "acceptance_criteria": item.description or "",
+    })
+    doc.insert(ignore_permissions=False)
+    return doc.name
+
+
+@frappe.whitelist()
+def agent_shift_queue(agent, project_id=None, status_filter=None):
+    """Read the shift queue for an agent. Returns Allocated + In Progress by default."""
+    _require_pmo_user()
+    if agent not in ALLOWED_ASSIGNEES:
+        frappe.throw(f"agent must be one of {sorted(ALLOWED_ASSIGNEES)}")
+    if isinstance(status_filter, str):
+        try:
+            status_filter = json.loads(status_filter)
+        except Exception:
+            status_filter = [status_filter]
+    filters = {"assigned_to": agent}
+    if project_id:
+        filters["project"] = _project_name(project_id)
+    if status_filter:
+        filters["status"] = ["in", status_filter]
+    else:
+        filters["status"] = ["in", ["Allocated", "In Progress"]]
+    return frappe.get_all("PMO Shift", filters=filters, fields=["*"], order_by="planned_start asc, creation asc")
+
+
+@frappe.whitelist()
+def start_shift(shift_id):
+    _require_pmo_user()
+    name = frappe.db.get_value("PMO Shift", {"shift_id": shift_id}, "name") or shift_id
+    frappe.db.set_value("PMO Shift", name, {"status": "In Progress", "actual_start": now_datetime()})
+    return {"ok": True, "shift": name, "status": "In Progress"}
+
+
+@frappe.whitelist()
+def complete_shift(shift_id, output_notes="", uat_result=None, oat_result=None):
+    """Mark a shift Done. Optionally log a UAT/OAT Run for the linked case/check."""
+    _require_pmo_user()
+    name = frappe.db.get_value("PMO Shift", {"shift_id": shift_id}, "name") or shift_id
+    shift = frappe.get_doc("PMO Shift", name)
+    shift.status = "Done"
+    shift.actual_end = now_datetime()
+    if output_notes:
+        shift.output_notes = output_notes
+    shift.save(ignore_permissions=False)
+    runs = []
+    if uat_result and shift.uat_case:
+        case_id = frappe.db.get_value("PMO UAT Case", shift.uat_case, "uat_case_id") or shift.uat_case
+        runs.append({"kind": "uat", **new_run(case_id=case_id, kind="uat", result=uat_result, evidence=output_notes, notes=f"Auto-logged via complete_shift({shift_id})", environment="Frappe Cloud production")})
+    if oat_result and shift.oat_check:
+        check_id = frappe.db.get_value("PMO OAT Check", shift.oat_check, "check_id") or shift.oat_check
+        runs.append({"kind": "oat", **new_run(case_id=check_id, kind="oat", result=oat_result, evidence=output_notes, notes=f"Auto-logged via complete_shift({shift_id})", environment="Frappe Cloud production")})
+    return {"ok": True, "shift": name, "status": "Done", "runs": runs}
+
+
+@frappe.whitelist()
+def block_shift(shift_id, reason=""):
+    _require_pmo_user()
+    name = frappe.db.get_value("PMO Shift", {"shift_id": shift_id}, "name") or shift_id
+    shift = frappe.get_doc("PMO Shift", name)
+    shift.status = "Blocked"
+    if reason:
+        shift.output_notes = (shift.output_notes or "") + f"\n\n[Blocked {now_datetime()}] {reason}"
+    shift.save(ignore_permissions=False)
+    return {"ok": True, "shift": name, "status": "Blocked"}
+
+
+@frappe.whitelist()
+def project_shifts(project_id, assignee=None, status_filter=None):
+    _require_pmo_user()
+    filters = {"project": _project_name(project_id)}
+    if assignee and assignee in ALLOWED_ASSIGNEES:
+        filters["assigned_to"] = assignee
+    if isinstance(status_filter, str):
+        try:
+            status_filter = json.loads(status_filter)
+        except Exception:
+            status_filter = [status_filter]
+    if status_filter:
+        filters["status"] = ["in", status_filter]
+    return frappe.get_all("PMO Shift", filters=filters, fields=["*"], order_by="planned_start asc, creation asc")
+
+
+@frappe.whitelist()
+def project_plans(project_id):
+    _require_pmo_user()
+    return frappe.get_all("PMO Plan", filters={"project": _project_name(project_id)}, fields=["*"], order_by="created_at desc")
+
+
+@frappe.whitelist()
+def dispatch_shift(shift_id, set_in_progress=True):
+    """Fire an outbound webhook to n8n with the shift payload so an agent (claude/codex) can pick it up.
+
+    Reads the webhook URL from site_config.json key `pmo_n8n_dispatch_url`. n8n is expected to:
+    1. Receive this payload.
+    2. Route by `assigned_to` (claude / codex / human).
+    3. Trigger the local agent on the developer machine (SSH, HTTP to runner, or queue).
+    4. When done, POST back to /api/method/vcl_pmo_doctypes.api.complete_shift with shift_id + output_notes + optional uat_result/oat_result.
+    """
+    _require_pmo_user()
+    import requests
+
+    name = frappe.db.get_value("PMO Shift", {"shift_id": shift_id}, "name") or shift_id
+    shift = frappe.get_doc("PMO Shift", name)
+    url = frappe.conf.get("pmo_n8n_dispatch_url")
+    if not url:
+        frappe.throw("pmo_n8n_dispatch_url not configured in site_config.json. Set it to the n8n webhook URL that should receive shift dispatches.")
+    payload = {
+        "event": "pmo.shift.dispatch",
+        "shift_id": shift.shift_id,
+        "shift_name": shift.name,
+        "title": shift.title,
+        "description": shift.description,
+        "assigned_to": shift.assigned_to,
+        "shift_type": shift.shift_type,
+        "project": shift.project,
+        "requires_uat": int(shift.requires_uat or 0),
+        "requires_oat": int(shift.requires_oat or 0),
+        "uat_case": shift.uat_case,
+        "oat_check": shift.oat_check,
+        "linked_plan": shift.linked_plan,
+        "linked_requirement": shift.linked_requirement,
+        "linked_milestone": shift.linked_milestone,
+        "linked_task": shift.linked_task,
+        "complete_shift_callback": "/api/method/vcl_pmo_doctypes.api.complete_shift",
+    }
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        resp.raise_for_status()
+        if set_in_progress and shift.status in {"Allocated", "Proposed"}:
+            shift.status = "In Progress"
+            shift.actual_start = now_datetime()
+            shift.save(ignore_permissions=False)
+        return {"ok": True, "shift": name, "n8n_status": resp.status_code, "n8n_response": (resp.text or "")[:500]}
+    except Exception as e:
+        return {"ok": False, "shift": name, "error": str(e)}
+
+
+@frappe.whitelist()
+def plan_detail(plan_id):
+    _require_pmo_user()
+    name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    doc = frappe.get_doc("PMO Plan", name)
+    items = []
+    for i, it in enumerate(doc.proposed_items):
+        items.append({
+            "index": i,
+            "name": it.name,
+            "item_type": it.item_type,
+            "title": it.title,
+            "description": it.description,
+            "metadata": _parse_metadata(it.metadata),
+            "needs_uat": int(it.needs_uat or 0),
+            "needs_oat": int(it.needs_oat or 0),
+            "assignee_hint": it.assignee_hint,
+            "promoted_to_doctype": it.promoted_to_doctype,
+            "promoted_to_name": it.promoted_to_name,
+            "promoted_at": it.promoted_at,
+        })
+    return {"plan": doc.as_dict(), "items": items}

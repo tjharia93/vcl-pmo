@@ -1,0 +1,87 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Plan",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "plan_id",
+      "label": "Plan ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "planner",
+      "label": "Planner",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Draft\nProposed\nAllocated\nExecuted\nClosed",
+      "default": "Draft"
+    },
+    {
+      "fieldname": "proposed_items",
+      "label": "Proposed Items",
+      "fieldtype": "Table",
+      "options": "PMO Plan Item"
+    },
+    {
+      "fieldname": "created_at",
+      "label": "Created At",
+      "fieldtype": "Datetime",
+      "default": "Now",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_by",
+      "label": "Approved By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "approved_at",
+      "label": "Approved At",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "autoname": "field:plan_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}
