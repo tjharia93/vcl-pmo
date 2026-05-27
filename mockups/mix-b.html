@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VCL PMO · Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1D2766; --blue:#2B3990; --blue-mid:#5C6DBE; --blue-light:#D6DBF5; --blue-pale:#EEF0FB;
+    --sage:#5A9367; --sage-soft:rgba(90,147,103,.22);
+    --green:#1B7A45; --green-light:#D4EDE0;
+    --amber:#B86B00; --amber-light:#FFF0CC;
+    --red:#C0392B; --red-light:#FADBD8;
+    --ink:#1C1C1E; --mid:#4A4F5C; --muted:#8A909E;
+    --rule:#E6E8EE; --surface:#F8F7F4; --paper:#FBFAF7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Manrope,-apple-system,system-ui,sans-serif;font-size:14px}
+  .serif{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto;letter-spacing:-.015em}
+  code,kbd,.mono{font-family:"JetBrains Mono",monospace;font-size:12px}
+  kbd{background:#fff;border:1px solid var(--rule);border-radius:3px;padding:1px 5px;font-size:10px;color:var(--mid)}
+  button{font-family:inherit;cursor:pointer}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;padding:18px 36px 0;gap:18px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+  .brand-mark{width:28px;height:28px;background:var(--sage);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+  .brand-name{font-family:Fraunces;font-weight:800;font-size:18px;letter-spacing:-.01em}
+  .brand-name span{display:block;font-family:Manrope;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:-2px}
+  .topbar .spacer{flex:1}
+  .kbd-hint{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--rule);border-radius:8px;color:var(--mid);font-size:12px;background:#fff}
+  .kbd-hint:hover{border-color:var(--blue);color:var(--blue)}
+  .user-pill{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:20px;border:1px solid var(--rule);background:#fff;font-size:12px;color:var(--mid)}
+  .user-pill .av{width:22px;height:22px;background:var(--sage);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10.5px}
+
+  /* page hero */
+  .hero{padding:36px 36px 12px;max-width:1180px}
+  .eyebrow{font-size:11px;color:var(--blue);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+  h1.title{font-family:Fraunces;font-weight:800;font-size:52px;line-height:1.05;letter-spacing:-.025em;margin:6px 0 6px;color:var(--ink)}
+  .title em{font-style:italic;color:var(--blue)}
+  .lede{font-size:15px;color:var(--mid);max-width:680px;line-height:1.55}
+
+  /* segmented view switcher */
+  .switcher{display:inline-flex;background:#fff;border:1px solid var(--rule);border-radius:10px;padding:4px;gap:2px;margin:22px 0 4px}
+  .switcher button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:0;background:transparent;color:var(--mid);font-size:13px;font-weight:600;border-radius:7px;cursor:pointer}
+  .switcher button:hover{color:var(--ink)}
+  .switcher button.active{background:var(--navy);color:#fff;box-shadow:0 1px 2px rgba(20,28,77,.18)}
+  .switcher button .ic{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;font-size:12px;opacity:.85}
+
+  /* filter row */
+  .filters{display:flex;align-items:center;gap:8px;margin:14px 0 22px;flex-wrap:wrap}
+  .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:14px;border:1px solid var(--rule);background:#fff;font-size:11.5px;color:var(--mid);cursor:pointer;font-weight:500}
+  .filter-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .filter-chip i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6;display:inline-block}
+
+  main{padding:0 36px 80px;max-width:1180px}
+
+  /* chips/status */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:11px;letter-spacing:.02em;border:1px solid transparent;cursor:pointer;font-family:Manrope}
+  .chip i{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .chip.muted{background:#fff;color:var(--mid);border-color:var(--rule)} .chip.muted i{background:var(--muted)}
+  .chip.green{background:var(--green-light);color:var(--green);border-color:#bfe2cd} .chip.green i{background:var(--green)}
+  .chip.amber{background:var(--amber-light);color:var(--amber);border-color:#f0d28b} .chip.amber i{background:var(--amber)}
+  .chip.blue{background:var(--blue-light);color:var(--blue);border-color:#bec7ea} .chip.blue i{background:var(--blue)}
+  .chip.red{background:var(--red-light);color:var(--red);border-color:#f1bcb4} .chip.red i{background:var(--red)}
+
+  /* TABLE lens */
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--rule);border-radius:12px;overflow:hidden;font-size:13px}
+  .tbl th{background:transparent;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:14px 18px;border-bottom:1px solid var(--rule)}
+  .tbl td{padding:14px 18px;border-top:1px solid var(--rule);color:var(--ink);vertical-align:middle}
+  .tbl tr:first-child td{border-top:0}
+  .tbl tr:hover td{background:var(--surface)}
+  .tbl .id-cell{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--blue);font-weight:600}
+  .tbl tr{cursor:pointer}
+
+  /* BOARD lens (mission) */
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .board-card{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:18px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .board-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,28,77,.08)}
+  .board-card .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+  .board-card .v{font-family:Fraunces;font-size:48px;font-weight:800;color:var(--navy);letter-spacing:-.03em;margin-top:6px;line-height:1}
+  .board-card.amber .v{color:var(--amber)}
+  .board-card.green .v{color:var(--green)}
+  .board-card .d{font-size:11px;color:var(--muted);margin-top:6px}
+
+  .proj-list{margin-top:22px;background:#fff;border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+  .proj-row{display:grid;grid-template-columns:1fr 200px 100px 100px;gap:14px;padding:16px 20px;border-top:1px solid var(--rule);align-items:center;cursor:pointer}
+  .proj-row:first-child{border-top:0}
+  .proj-row:hover{background:var(--surface)}
+  .proj-row .nm{font-family:Fraunces;font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .proj-row .id{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--muted)}
+  .progress{height:8px;background:var(--blue-pale);border-radius:4px;overflow:hidden}
+  .progress > i{display:block;height:100%;background:var(--blue);border-radius:4px}
+
+  /* TIMELINE lens */
+  .tl{background:#fff;border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+  .tl-grid{display:grid;grid-template-columns:200px repeat(6,1fr)}
+  .tl-cell{padding:12px 14px;border-right:1px solid var(--rule);border-top:1px solid var(--rule);font-size:12px;min-height:52px;display:flex;align-items:center}
+  .tl-cell.h{color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;border-top:0;background:var(--surface)}
+  .tl-cell.lbl{background:var(--surface);font-family:Fraunces;font-weight:700;font-size:15px;letter-spacing:-.005em}
+  .tl-cell:last-child{border-right:0}
+  .bar-mini{display:inline-block;height:12px;border-radius:4px;width:100%;background:var(--blue)}
+  .bar-mini.green{background:var(--green)}
+  .bar-mini.amber{background:var(--amber)}
+  .bar-mini.partial{background:linear-gradient(90deg,var(--blue) 65%,var(--blue-light) 65%)}
+  .bar-mini.blocked{background:var(--red)}
+
+  /* BRIEFING lens */
+  .brief{max-width:720px;background:#fff;border:1px solid var(--rule);border-radius:12px;padding:48px 56px;line-height:1.75;font-size:16px}
+  .brief .eyebrow{margin-bottom:6px}
+  .brief h2{font-family:Fraunces;font-weight:800;font-size:36px;letter-spacing:-.025em;line-height:1.1;margin:0 0 6px;color:var(--navy)}
+  .brief .dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:24px}
+  .brief p{margin:0 0 16px}
+  .brief .dropcap::first-letter{font-family:Fraunces;font-weight:800;font-size:62px;float:left;line-height:.9;padding:6px 12px 0 0;color:var(--blue)}
+  .brief a{color:var(--blue);border-bottom:1px solid var(--blue-light);text-decoration:none;cursor:pointer}
+  .brief a:hover{border-bottom-color:var(--blue)}
+  .brief .pill-inline{display:inline-block;background:var(--green-light);color:var(--green);font-size:10px;font-weight:800;padding:2px 7px;border-radius:9px;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:3px;font-family:Manrope}
+  .brief hr{border:0;border-top:1px solid var(--rule);margin:22px 0}
+  .brief .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:14px}
+  .brief .stat-row .s{padding:14px 0;border-top:1px solid var(--rule)}
+  .brief .stat-row .s .n{font-family:Fraunces;font-size:36px;font-weight:800;color:var(--navy);letter-spacing:-.02em;line-height:1}
+  .brief .stat-row .s .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;margin-top:4px}
+
+  /* buttons */
+  .btn{font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--rule);color:var(--ink);background:#fff;font-family:Manrope}
+  .btn:hover{border-color:var(--blue);color:var(--blue)}
+  .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .btn.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.ghost{border-color:transparent;color:var(--muted)}
+
+  /* palette/drawer/toast (shared style approach) */
+  .palette-overlay{position:fixed;inset:0;background:rgba(20,28,77,.5);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding-top:88px;z-index:100}
+  .palette-overlay.show{display:flex}
+  .palette{width:560px;background:#fff;border-radius:14px;box-shadow:0 24px 48px rgba(20,28,77,.32);overflow:hidden}
+  .palette input{width:100%;border:0;outline:0;padding:20px 24px;font-size:16px;font-family:Fraunces;color:var(--ink);border-bottom:1px solid var(--rule)}
+  .palette input::placeholder{color:var(--muted);font-family:Manrope}
+  .pal-list{max-height:380px;overflow:auto;padding:6px 0}
+  .pal-grp{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;padding:12px 24px 4px}
+  .pal-item{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:8px 24px;cursor:pointer;font-size:13px}
+  .pal-item:hover,.pal-item.sel{background:var(--blue-pale)}
+  .pal-item .ic{width:22px;height:22px;border-radius:6px;background:var(--blue-light);color:var(--blue);font-weight:800;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+  .pal-item .sub{font-size:10.5px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+  .pal-foot{padding:10px 24px;border-top:1px solid var(--rule);font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+
+  .drawer-bg{position:fixed;inset:0;background:rgba(20,28,77,.4);display:none;z-index:90}
+  .drawer-bg.show{display:block}
+  .drawer{position:fixed;top:0;right:0;width:520px;height:100vh;background:#fff;box-shadow:-16px 0 40px rgba(20,28,77,.18);transform:translateX(100%);transition:transform .22s cubic-bezier(.2,.7,.2,1);z-index:91;display:flex;flex-direction:column}
+  .drawer.show{transform:translateX(0)}
+  .drawer-head{padding:24px 28px;border-bottom:1px solid var(--rule)}
+  .drawer-head .id{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--blue);font-weight:700;margin-bottom:6px}
+  .drawer-head h3{font-family:Fraunces;font-weight:800;font-size:22px;letter-spacing:-.015em;margin:0 0 4px;line-height:1.2}
+  .drawer-head .sub{font-size:12px;color:var(--muted)}
+  .drawer-body{padding:24px 28px;flex:1;overflow:auto}
+  .drawer-section{margin-bottom:22px}
+  .drawer-section h4{margin:0 0 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--blue);font-weight:700}
+  .field-row{display:grid;grid-template-columns:90px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--rule);font-size:12.5px}
+  .field-row:first-child{border-top:0}
+  .field-row .k{color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.1em;font-weight:700;padding-top:3px}
+  .drawer-foot{padding:18px 28px;border-top:1px solid var(--rule);display:flex;gap:8px}
+
+  .status-menu{position:absolute;background:#fff;border:1px solid var(--rule);border-radius:8px;box-shadow:0 12px 28px rgba(20,28,77,.16);padding:4px 0;min-width:160px;z-index:120;display:none}
+  .status-menu.show{display:block}
+  .status-menu .opt{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+  .status-menu .opt:hover{background:var(--blue-pale)}
+  .status-menu .opt i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  .toast{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;box-shadow:0 14px 32px rgba(20,28,77,.32);transform:translateY(20px);opacity:0;transition:all .22s ease;z-index:140;display:flex;align-items:center;gap:10px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast .ico{width:20px;height:20px;background:var(--sage);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+
+  .home-link{position:fixed;top:18px;right:18px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:7px 14px;font-size:11.5px;color:var(--mid);text-decoration:none;z-index:50}
+  .home-link:hover{color:var(--blue);border-color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">V</span>
+    <div class="brand-name">VCL PMO<span>Lens · Mix B</span></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="kbd-hint" onclick="openPalette()">Search or command <kbd>&#8984;</kbd><kbd>K</kbd></button>
+  <span class="user-pill"><span class="av">TH</span> Tanuj</span>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">Programme office</div>
+  <h1 class="title serif">Four lenses<em>,</em><br>one data set.</h1>
+  <p class="lede">Same fifteen requirements, four ways to read them. Toggle the lens, the data follows. Click any status to change it inline; press <kbd>&#8984;</kbd><kbd>K</kbd> to do anything else.</p>
+
+  <div class="switcher" id="switcher">
+    <button data-view="table" class="active"><span class="ic">&#9783;</span>Requirements</button>
+    <button data-view="board"><span class="ic">&#9737;</span>Mission</button>
+    <button data-view="timeline"><span class="ic">&#9714;</span>Timeline</button>
+    <button data-view="briefing"><span class="ic">&#9776;</span>Briefing</button>
+  </div>
+</section>
+
+<main>
+  <div class="filters" id="filters">
+    <span class="filter-chip active" data-f="all">All <span class="mono" style="opacity:.6" id="cnt-all">15</span></span>
+    <span class="filter-chip" data-f="needs"><i></i>Needs action <span class="mono" style="opacity:.6" id="cnt-needs">3</span></span>
+    <span class="filter-chip" data-f="blocked"><i style="background:var(--red)"></i>Blocked <span class="mono" style="opacity:.6" id="cnt-blocked">1</span></span>
+    <span class="filter-chip" data-f="review"><i style="background:var(--amber)"></i>In Review <span class="mono" style="opacity:.6" id="cnt-review">1</span></span>
+    <span class="filter-chip" data-f="done"><i style="background:var(--green)"></i>Done <span class="mono" style="opacity:.6" id="cnt-done">10</span></span>
+  </div>
+
+  <!-- TABLE -->
+  <section class="view" data-view="table">
+    <table class="tbl">
+      <thead><tr><th>ID</th><th>Requirement</th><th>Project</th><th>Owner</th><th>UAT</th><th>Status</th></tr></thead>
+      <tbody id="req-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- BOARD -->
+  <section class="view" data-view="board" style="display:none">
+    <div class="board">
+      <div class="board-card" onclick="setView('table')"><div class="l">Active projects</div><div class="v">3</div><div class="d">+1 in build</div></div>
+      <div class="board-card green" onclick="setView('table')"><div class="l">Done</div><div class="v" id="bd-done">10</div><div class="d">of 15</div></div>
+      <div class="board-card amber" onclick="setView('table')"><div class="l">Blocked</div><div class="v" id="bd-blocked">1</div><div class="d">CFO decisions</div></div>
+      <div class="board-card" onclick="setView('table')"><div class="l">UAT failing</div><div class="v">0</div><div class="d">clean run</div></div>
+    </div>
+    <div class="proj-list" id="proj-list"></div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="view" data-view="timeline" style="display:none">
+    <div class="tl">
+      <div class="tl-grid">
+        <div class="tl-cell h">Project</div>
+        <div class="tl-cell h">May</div><div class="tl-cell h">Jun</div><div class="tl-cell h">Jul</div><div class="tl-cell h">Aug</div><div class="tl-cell h">Sep</div><div class="tl-cell h">Oct</div>
+
+        <div class="tl-cell lbl">HR &amp; Payroll</div>
+        <div class="tl-cell"><span class="bar-mini green"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">Imports Portal</div>
+        <div class="tl-cell"></div>
+        <div class="tl-cell"><span class="bar-mini"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">ERP↔QBO AR</div>
+        <div class="tl-cell"></div><div class="tl-cell"></div>
+        <div class="tl-cell"><span class="bar-mini amber"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">PMO Interface</div>
+        <div class="tl-cell"><span class="bar-mini blocked"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING -->
+  <section class="view" data-view="briefing" style="display:none">
+    <article class="brief">
+      <div class="eyebrow">VCL PMO Briefing</div>
+      <h2>27 May 2026.<br><span style="color:var(--blue)">A live morning.</span></h2>
+      <div class="dt">07:48 EAT · auto-refresh on</div>
+      <p class="dropcap">Three projects are active this morning. <a onclick="openDrawer('VCL-DEV-HR-001-project')">HR &amp; Payroll</a> went <span class="pill-inline">Live</span> with the May 2026 cycle: ninety-seven salary slips submitted, a 0.49% variance versus Jitu's books, the residual explained by five director exceptions.</p>
+      <p>One requirement needs attention before the June cycle: <a onclick="openDrawer('HR-002')">HR-002 (Salary Structure formulas)</a> on VCL, BIL, and BVL. A working reference exists in <code>VCL Joan Trial 2026-05 v2</code> — fix is a 30-minute REST patch.</p>
+      <p>The <a onclick="setView('board')">Imports Portal</a> is in Phase 1 (Frappe scaffold). <a onclick="setView('board')">ERP↔QBO AR Alignment</a> is gated on five CFO decisions before the SI↔SO matcher can build.</p>
+      <p><code>codex-cli</code> is mid-build on <a onclick="openDrawer('PMO-001')">VCL-DEV-PMO-001</a> — this very interface. On completion the agent will POST <code>/pmo/api/agent/complete</code> and Telegram-notify.</p>
+      <hr>
+      <div class="stat-row">
+        <div class="s"><div class="n">3</div><div class="l">Active</div></div>
+        <div class="s"><div class="n" id="brief-done">10</div><div class="l">Done</div></div>
+        <div class="s"><div class="n" id="brief-blocked">1</div><div class="l">Blocked</div></div>
+        <div class="s"><div class="n">0</div><div class="l">UAT failing</div></div>
+      </div>
+      <div style="margin-top:24px;display:flex;gap:8px">
+        <button class="btn primary" onclick="toast('Briefing rendered to PDF')">Render to PDF</button>
+        <button class="btn" onclick="toast('Sent to Telegram')">Send to Telegram</button>
+      </div>
+    </article>
+  </section>
+</main>
+
+<a class="home-link" href="./">&larr; back to mixes</a>
+
+<!-- palette -->
+<div class="palette-overlay" id="palette" onclick="if(event.target===this)closePalette()">
+  <div class="palette">
+    <input id="pal-input" placeholder="Search or run a command…" autocomplete="off">
+    <div class="pal-list" id="pal-list"></div>
+    <div class="pal-foot"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> · <kbd>&#9166;</kbd> · <kbd>esc</kbd></span><span>VCL PMO · Lens</span></div>
+  </div>
+</div>
+
+<!-- drawer -->
+<div class="drawer-bg" id="drawer-bg" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><div class="id" id="d-id">—</div><h3 id="d-title">—</h3><div class="sub" id="d-sub">—</div></div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot">
+    <button class="btn primary" onclick="toast('Agent dispatched')">Dispatch agent</button>
+    <button class="btn" onclick="toast('Opened in ERPNext')">Open in ERPNext</button>
+    <button class="btn ghost" onclick="closeDrawer()">Close</button>
+  </div>
+</aside>
+
+<div class="status-menu" id="status-menu"></div>
+<div class="toast" id="toast"><span class="ico">&#10003;</span><span id="toast-text">Done</span></div>
+
+<script src="./seed.js"></script>
+<script>
+  const MIX = "b";
+  let reqs = VCL.getReqs(MIX);
+  let currentView = "table";
+  let currentFilter = "all";
+  let palSel = 0, palItems = [];
+
+  function setView(v){
+    currentView = v;
+    document.querySelectorAll(".switcher button").forEach(b=>b.classList.toggle("active", b.dataset.view===v));
+    document.querySelectorAll(".view").forEach(s=>s.style.display = s.dataset.view===v ? "block" : "none");
+    closePalette();
+  }
+  document.querySelectorAll(".switcher button").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+
+  function statusChip(s, id){
+    const c = VCL.STATUS_COLOUR[s]||"muted";
+    return `<span class="chip ${c}" data-reqid="${id}" onclick="event.stopPropagation();openStatusMenu(event,'${id}')"><i></i>${s}</span>`;
+  }
+
+  function visibleReqs(){
+    if(currentFilter==="all") return reqs;
+    if(currentFilter==="needs") return reqs.filter(r=>r.needs_action);
+    if(currentFilter==="blocked") return reqs.filter(r=>r.status==="Blocked");
+    if(currentFilter==="review") return reqs.filter(r=>r.status==="In Review");
+    if(currentFilter==="done") return reqs.filter(r=>r.status==="Done");
+    return reqs;
+  }
+
+  function renderTable(){
+    const list = visibleReqs();
+    document.getElementById("req-tbody").innerHTML = list.map(r=>`
+      <tr onclick="openDrawer('${r.id}')">
+        <td class="id-cell">${r.id}</td>
+        <td>${r.requirement}</td>
+        <td><span class="mono" style="font-size:11px;color:var(--mid)">${r.project}</span></td>
+        <td><span class="mono" style="font-size:11px;color:var(--mid)">${r.owner}</span></td>
+        <td><span class="chip ${r.uat==='Pass'?'green':'muted'}"><i></i>${r.uat}</span></td>
+        <td>${statusChip(r.status,r.id)}</td>
+      </tr>`).join("");
+  }
+
+  function renderBoard(){
+    const list = VCL.PROJECTS.map(p=>{
+      const projReqs = reqs.filter(r=>r.project===p.id);
+      const done = projReqs.filter(r=>r.status==="Done").length;
+      return `<div class="proj-row" onclick="openDrawer('${p.id}-project')">
+        <div><div class="nm">${p.name}</div><div class="id">${p.id} · ${p.system}</div></div>
+        <div class="progress"><i style="width:${p.progress}%"></i></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mid)">${done}/${projReqs.length}</div>
+        <div><span class="chip ${p.color}"><i></i>${p.status}</span></div>
+      </div>`;
+    }).join("");
+    document.getElementById("proj-list").innerHTML = list;
+  }
+
+  function renderCounts(){
+    document.getElementById("cnt-all").innerText = reqs.length;
+    document.getElementById("cnt-needs").innerText = reqs.filter(r=>r.needs_action).length;
+    document.getElementById("cnt-blocked").innerText = reqs.filter(r=>r.status==="Blocked").length;
+    document.getElementById("cnt-review").innerText = reqs.filter(r=>r.status==="In Review").length;
+    document.getElementById("cnt-done").innerText = reqs.filter(r=>r.status==="Done").length;
+    document.getElementById("bd-done").innerText = reqs.filter(r=>r.status==="Done").length;
+    document.getElementById("bd-blocked").innerText = reqs.filter(r=>r.status==="Blocked").length;
+    document.getElementById("brief-done").innerText = reqs.filter(r=>r.status==="Done").length;
+    document.getElementById("brief-blocked").innerText = reqs.filter(r=>r.status==="Blocked").length;
+  }
+
+  function renderAll(){ renderTable(); renderBoard(); renderCounts(); }
+
+  // filter chips
+  document.querySelectorAll(".filter-chip").forEach(c=>{
+    c.addEventListener("click",()=>{
+      currentFilter = c.dataset.f;
+      document.querySelectorAll(".filter-chip").forEach(x=>x.classList.toggle("active", x===c));
+      renderTable();
+    });
+  });
+
+  // status menu
+  function openStatusMenu(ev, id){
+    const m = document.getElementById("status-menu");
+    m.innerHTML = VCL.STATUS_ORDER.map(s=>{
+      const c = VCL.STATUS_COLOUR[s];
+      return `<div class="opt" onclick="setStatus('${id}','${s}')"><i style="background:var(--${c==='muted'?'muted':c})"></i>${s}</div>`;
+    }).join("");
+    const r = ev.target.getBoundingClientRect();
+    m.style.left = r.left+"px";
+    m.style.top = (r.bottom+4)+"px";
+    m.classList.add("show");
+    document.addEventListener("click", closeStatusMenu, {once:true});
+  }
+  function closeStatusMenu(){ document.getElementById("status-menu").classList.remove("show"); }
+  function setStatus(id, s){
+    const r = reqs.find(x=>x.id===id);
+    if(r){ r.status=s; VCL.saveState(MIX, reqs); renderAll(); toast(`${id} → ${s}`); }
+    closeStatusMenu();
+  }
+
+  // drawer
+  function openDrawer(id){
+    closeStatusMenu();
+    let title, sub, body, idLabel;
+    if(id.endsWith("-project")){
+      const p = VCL.PROJECTS.find(x=>x.id===id.replace("-project",""));
+      if(!p) return;
+      idLabel = p.id;
+      title = p.name;
+      sub = `${p.system} · ${p.status} · go-live ${p.go_live}`;
+      const projReqs = reqs.filter(r=>r.project===p.id);
+      body = `<div class="drawer-section"><h4>Status</h4>
+        <div class="field-row"><span class="k">System</span><span>${p.system}</span></div>
+        <div class="field-row"><span class="k">Requestor</span><span>${p.requestor}</span></div>
+        <div class="field-row"><span class="k">Priority</span><span>${p.priority}</span></div>
+        <div class="field-row"><span class="k">Go-live</span><span>${p.go_live}</span></div>
+        <div class="field-row"><span class="k">Progress</span><span>${p.progress}%</span></div></div>
+        <div class="drawer-section"><h4>Requirements (${projReqs.length})</h4>
+        ${projReqs.map(r=>`<div class="field-row"><span class="k">${r.id}</span><span>${r.requirement.substring(0,52)}${r.requirement.length>52?'…':''} ${statusChip(r.status,r.id)}</span></div>`).join("")}</div>`;
+    } else {
+      const r = reqs.find(x=>x.id===id);
+      if(!r) return;
+      idLabel = r.id;
+      title = r.requirement;
+      sub = `${r.project} · ${r.area} · ${r.priority}`;
+      body = `<div class="drawer-section"><h4>Status</h4>
+        <div class="field-row"><span class="k">Status</span><span>${statusChip(r.status,r.id)}</span></div>
+        <div class="field-row"><span class="k">UAT</span><span><span class="chip ${r.uat==='Pass'?'green':'muted'}"><i></i>${r.uat}</span></span></div>
+        <div class="field-row"><span class="k">Owner</span><span class="mono">${r.owner}</span></div>
+        <div class="field-row"><span class="k">Project</span><span class="mono">${r.project}</span></div></div>
+        ${r.note?`<div class="drawer-section"><h4>Note</h4><p style="font-size:13px;line-height:1.55">${r.note}</p></div>`:""}
+        <div class="drawer-section"><h4>Activity</h4>
+        ${VCL.FEED.filter(f=>f.target===r.id).map(f=>`<div class="field-row"><span class="k">${f.ts}</span><span><code>${f.actor}</code> ${f.verb} ${f.to?'→ <b>'+f.to+'</b>':''}</span></div>`).join("")||'<p style="color:var(--muted);font-size:12px">No recorded activity.</p>'}</div>`;
+    }
+    document.getElementById("d-id").innerText = idLabel;
+    document.getElementById("d-title").innerText = title;
+    document.getElementById("d-sub").innerText = sub;
+    document.getElementById("d-body").innerHTML = body;
+    document.getElementById("drawer").classList.add("show");
+    document.getElementById("drawer-bg").classList.add("show");
+  }
+  function closeDrawer(){ document.getElementById("drawer").classList.remove("show"); document.getElementById("drawer-bg").classList.remove("show"); }
+
+  // palette
+  function openPalette(){ document.getElementById("palette").classList.add("show"); const i=document.getElementById("pal-input"); i.value=""; i.focus(); renderPalette(""); }
+  function closePalette(){ document.getElementById("palette").classList.remove("show"); }
+  function paletteItems(q){
+    q = (q||"").toLowerCase();
+    const actions = [
+      { ic:"+", nm:"Create requirement", sub:"action", fn:()=>{toast("New requirement (stub)");closePalette()} },
+      { ic:"→", nm:"Dispatch agent on selected", sub:"action", fn:()=>{toast("Agent dispatched");closePalette()} },
+      { ic:"≡", nm:"Switch lens · Requirements table", sub:"action", fn:()=>setView("table") },
+      { ic:"≡", nm:"Switch lens · Mission board", sub:"action", fn:()=>setView("board") },
+      { ic:"≡", nm:"Switch lens · Timeline", sub:"action", fn:()=>setView("timeline") },
+      { ic:"≡", nm:"Switch lens · Briefing", sub:"action", fn:()=>setView("briefing") }
+    ];
+    const reqMatches = reqs.filter(r=>!q || r.id.toLowerCase().includes(q) || r.requirement.toLowerCase().includes(q)).slice(0,8)
+      .map(r=>({ ic:r.id.split("-")[0], nm:`${r.id} — ${r.requirement.substring(0,50)}${r.requirement.length>50?'…':''}`, sub:r.project, fn:()=>{openDrawer(r.id);closePalette()} }));
+    const projMatches = VCL.PROJECTS.filter(p=>!q || p.name.toLowerCase().includes(q)).slice(0,4)
+      .map(p=>({ ic:"#", nm:p.name, sub:p.id, fn:()=>{openDrawer(p.id+'-project');closePalette()} }));
+    const actMatches = q ? actions.filter(a=>a.nm.toLowerCase().includes(q)) : actions.slice(0,4);
+    return [["Actions",actMatches],["Requirements",reqMatches],["Projects",projMatches]];
+  }
+  function renderPalette(q){
+    const groups = paletteItems(q);
+    palItems = [];
+    let html = "";
+    groups.forEach(([title, items])=>{
+      if(!items.length) return;
+      html += `<div class="pal-grp">${title}</div>`;
+      items.forEach(it=>{
+        const idx = palItems.length;
+        palItems.push(it);
+        html += `<div class="pal-item" data-idx="${idx}" onclick="palItems[${idx}].fn()"><span class="ic">${it.ic}</span><span class="nm">${it.nm}</span><span class="sub">${it.sub}</span></div>`;
+      });
+    });
+    document.getElementById("pal-list").innerHTML = html || `<div class="pal-grp">No matches</div>`;
+    palSel = 0; updatePalSel();
+  }
+  function updatePalSel(){
+    document.querySelectorAll(".pal-item").forEach((el,i)=>el.classList.toggle("sel", i===palSel));
+    const sel = document.querySelector(".pal-item.sel"); if(sel) sel.scrollIntoView({block:"nearest"});
+  }
+  document.getElementById("pal-input").addEventListener("input", e=>renderPalette(e.target.value));
+  document.addEventListener("keydown", e=>{
+    if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openPalette(); return; }
+    if(e.key==="Escape"){ closePalette(); closeDrawer(); closeStatusMenu(); return; }
+    if(document.getElementById("palette").classList.contains("show")){
+      if(e.key==="ArrowDown"){ e.preventDefault(); palSel = Math.min(palItems.length-1, palSel+1); updatePalSel(); }
+      if(e.key==="ArrowUp"){ e.preventDefault(); palSel = Math.max(0, palSel-1); updatePalSel(); }
+      if(e.key==="Enter" && palItems[palSel]){ e.preventDefault(); palItems[palSel].fn(); }
+    }
+  });
+
+  let toastTimer;
+  function toast(msg){ const t=document.getElementById("toast"); document.getElementById("toast-text").innerText=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
+
+  renderAll();
+</script>
+</body>
+</html>

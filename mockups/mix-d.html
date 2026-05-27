@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VCL PMO · Memo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700;8..60,800&family=Fira+Sans+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF8F1;
+    --paper-2:#F4EFE4;
+    --ink:#1B1815;
+    --ink-2:#2A2622;
+    --mid:#5A544A;
+    --muted:#8C8377;
+    --rule:#D7CFBE;
+    --rule-2:#BFAE93;
+    --navy:#1D2766;
+    --blue:#2B3990;
+    --blue-light:#E2E5F2;
+    --sage:#5A9367;
+    --sage-soft:#D9E7DC;
+    --green:#1B7A45;
+    --green-light:#D4EDE0;
+    --amber:#9C5300;
+    --amber-light:#F7E0B8;
+    --red:#9B2D24;
+    --red-light:#F1CFC8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.6;letter-spacing:.005em}
+  .sans{font-family:'Fira Sans Condensed',-apple-system,system-ui,sans-serif;font-weight:500}
+  .mono,code,kbd{font-family:'JetBrains Mono',monospace;font-size:13px}
+  kbd{background:var(--paper-2);border:1px solid var(--rule);border-radius:3px;padding:1px 6px;font-size:11px;color:var(--mid)}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  a{color:inherit;text-decoration:none}
+
+  /* masthead */
+  .masthead{border-bottom:2px solid var(--ink);padding:18px 36px 14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;background:var(--paper)}
+  .masthead .left{font-family:'Fira Sans Condensed';font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--mid)}
+  .masthead .left .v{display:inline-flex;align-items:center;gap:8px}
+  .masthead .left .brand-mark{width:22px;height:22px;background:var(--ink);color:var(--paper);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:0}
+  .masthead .title{text-align:center;font-family:'Source Serif 4';font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--ink);line-height:1}
+  .masthead .title .sub{display:block;font-family:'Fira Sans Condensed';font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);margin-top:6px}
+  .masthead .right{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+  .kbd-hint{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--rule-2);border-radius:6px;color:var(--mid);font-family:'Fira Sans Condensed';font-size:11.5px;letter-spacing:.04em;background:var(--paper)}
+  .kbd-hint:hover{border-color:var(--ink);color:var(--ink)}
+  .user-pill{display:inline-flex;align-items:center;gap:8px;font-family:'Fira Sans Condensed';font-size:11.5px;color:var(--mid)}
+  .user-pill .av{width:26px;height:26px;background:var(--ink);color:var(--paper);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;letter-spacing:.04em}
+
+  .ribbon{background:var(--paper-2);padding:6px 36px;border-bottom:1px solid var(--rule);font-family:'Fira Sans Condensed';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);display:flex;justify-content:space-between;align-items:center}
+  .ribbon b{color:var(--ink);font-weight:700}
+  .ribbon nav{display:flex;gap:18px}
+  .ribbon nav a{cursor:pointer;color:var(--mid)}
+  .ribbon nav a:hover,.ribbon nav a.active{color:var(--ink);border-bottom:2px solid var(--ink);padding-bottom:2px;margin-bottom:-2px}
+
+  main{display:grid;grid-template-columns:1fr 720px 1fr;column-gap:24px;padding:36px;max-width:1280px;margin:0 auto}
+
+  /* margins */
+  aside.gutter{padding-top:80px}
+  aside.gutter.left{text-align:right}
+  aside.gutter .label{font-family:'Fira Sans Condensed';font-size:10.5px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  aside.gutter .stat{font-family:'Source Serif 4';font-weight:800;font-size:38px;color:var(--ink);letter-spacing:-.02em;line-height:1}
+  aside.gutter .stat sub{font-family:'Fira Sans Condensed';font-size:11px;color:var(--muted);font-weight:500;margin-left:4px;letter-spacing:.04em;vertical-align:baseline}
+  aside.gutter .block{margin-bottom:30px}
+  aside.gutter ul{list-style:none;padding:0;margin:0;font-family:'Fira Sans Condensed';font-size:12px;color:var(--mid)}
+  aside.gutter ul li{padding:4px 0;border-top:1px solid var(--rule)}
+  aside.gutter ul li:first-child{border-top:0}
+  aside.gutter ul li b{color:var(--ink);font-weight:700}
+
+  aside.gutter.right .btn-stack{display:flex;flex-direction:column;gap:8px;text-align:left}
+  .btn{font-family:'Fira Sans Condensed';font-size:13px;font-weight:600;letter-spacing:.05em;padding:9px 14px;border-radius:6px;border:1px solid var(--rule-2);color:var(--ink);background:var(--paper);text-transform:uppercase;text-align:center}
+  .btn:hover{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+  .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .btn.primary:hover{background:var(--blue);border-color:var(--blue)}
+  .btn.ghost{border-color:transparent;color:var(--mid)}
+
+  /* article */
+  article.memo{max-width:720px}
+  .memo .eyebrow{font-family:'Fira Sans Condensed';font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .memo .eyebrow .dot{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;animation:blink 1.4s ease infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .memo h1{font-family:'Source Serif 4';font-weight:800;font-size:64px;line-height:1.05;letter-spacing:-.025em;color:var(--ink);margin:0 0 14px}
+  .memo h1 em{font-style:italic;color:var(--blue);font-weight:700}
+  .memo .deck{font-family:'Source Serif 4';font-weight:500;font-size:22px;line-height:1.5;color:var(--mid);margin:0 0 28px;letter-spacing:-.005em}
+  .memo .byline{font-family:'Fira Sans Condensed';font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 0;margin-bottom:30px;display:flex;justify-content:space-between}
+  .memo .byline b{color:var(--ink);font-weight:700}
+
+  .memo p{margin:0 0 14px;font-size:17px;line-height:1.65;color:var(--ink-2)}
+  .memo .lead{font-size:19px;line-height:1.55;color:var(--ink)}
+  .memo .lead::first-letter{font-family:'Source Serif 4';font-weight:800;font-size:72px;float:left;line-height:.85;padding:8px 14px 0 0;color:var(--blue)}
+  .memo a.ref{color:var(--blue);border-bottom:1px solid var(--blue-light);cursor:pointer;font-weight:500}
+  .memo a.ref:hover{background:var(--blue-light);border-bottom-color:var(--blue)}
+  .memo .pill-inline{display:inline-block;background:var(--green-light);color:var(--green);font-family:'Fira Sans Condensed';font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:9px;letter-spacing:.15em;text-transform:uppercase;vertical-align:1px;margin:0 2px}
+  .memo .pull{font-family:'Source Serif 4';font-style:italic;font-weight:600;font-size:24px;line-height:1.4;color:var(--navy);border-left:3px solid var(--blue);padding:8px 0 8px 22px;margin:20px 0;letter-spacing:-.005em}
+
+  .memo .small-caps{font-family:'Fira Sans Condensed';font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:36px;margin-bottom:10px;border-top:1px solid var(--rule);padding-top:14px}
+
+  /* appendix sections (compact lenses below) */
+  .appendix{max-width:1080px;margin:80px auto 0;padding:0 36px 80px}
+  .appendix .title{font-family:'Source Serif 4';font-weight:800;font-size:26px;letter-spacing:-.015em;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+  .appendix .title small{font-family:'Fira Sans Condensed';font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-left:10px}
+  .app-section{margin-bottom:48px}
+
+  /* queue */
+  .queue{display:flex;flex-direction:column;gap:8px}
+  .queue-row{display:grid;grid-template-columns:32px 1fr auto auto;gap:14px;align-items:center;padding:14px 18px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;cursor:pointer}
+  .queue-row:hover{border-color:var(--ink);background:#fff}
+  .dot{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--paper);font-weight:800;font-size:13px;font-family:'Source Serif 4'}
+  .dot.warn{background:var(--amber)}
+  .dot.done{background:var(--green)}
+  .dot.blk{background:var(--red)}
+  .q-body .ttl{font-family:'Source Serif 4';font-weight:700;font-size:16px;letter-spacing:-.005em}
+  .q-body .meta{font-family:'Fira Sans Condensed';font-size:12px;color:var(--mid);margin-top:2px;letter-spacing:.04em}
+  .q-actions{display:flex;gap:6px}
+
+  /* table */
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);font-size:14px}
+  .tbl th{color:var(--mid);font-family:'Fira Sans Condensed';font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.12em;text-align:left;padding:10px 14px;border-bottom:1px solid var(--ink)}
+  .tbl td{padding:13px 14px;border-top:1px solid var(--rule);color:var(--ink-2);vertical-align:middle}
+  .tbl tr{cursor:pointer}
+  .tbl tr:hover td{background:var(--paper-2)}
+  .tbl .id-cell{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--blue);font-weight:600}
+
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-family:'Fira Sans Condensed';font-size:11px;font-weight:700;padding:3px 9px;border-radius:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:1px solid transparent}
+  .chip i{width:5px;height:5px;border-radius:50%;display:inline-block}
+  .chip.muted{background:var(--paper-2);color:var(--mid);border-color:var(--rule)} .chip.muted i{background:var(--muted)}
+  .chip.green{background:var(--green-light);color:var(--green);border-color:#bfe2cd} .chip.green i{background:var(--green)}
+  .chip.amber{background:var(--amber-light);color:var(--amber);border-color:#e8c878} .chip.amber i{background:var(--amber)}
+  .chip.blue{background:var(--blue-light);color:var(--blue);border-color:#bec7ea} .chip.blue i{background:var(--blue)}
+  .chip.red{background:var(--red-light);color:var(--red);border-color:#e3a89e} .chip.red i{background:var(--red)}
+
+  /* timeline (editorial) */
+  .tl{background:var(--paper);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+  .tl-grid{display:grid;grid-template-columns:200px repeat(6,1fr)}
+  .tl-cell{padding:13px 14px;border-right:1px solid var(--rule);border-top:1px solid var(--rule);font-size:13px;min-height:52px;display:flex;align-items:center}
+  .tl-cell.h{color:var(--mid);font-family:'Fira Sans Condensed';font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.12em;border-top:0;background:var(--paper-2);border-bottom:1px solid var(--ink)}
+  .tl-cell.lbl{background:var(--paper-2);font-family:'Source Serif 4';font-weight:700;font-size:15px;letter-spacing:-.005em}
+  .tl-cell:last-child{border-right:0}
+  .bar-mini{display:inline-block;height:12px;border-radius:3px;width:100%;background:var(--blue)}
+  .bar-mini.green{background:var(--green)}
+  .bar-mini.amber{background:var(--amber)}
+  .bar-mini.partial{background:linear-gradient(90deg,var(--blue) 65%,var(--blue-light) 65%)}
+  .bar-mini.blocked{background:var(--red)}
+
+  /* palette */
+  .palette-overlay{position:fixed;inset:0;background:rgba(27,24,21,.5);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding-top:88px;z-index:100}
+  .palette-overlay.show{display:flex}
+  .palette{width:560px;background:var(--paper);border:1px solid var(--rule-2);border-radius:8px;box-shadow:0 24px 60px rgba(27,24,21,.3);overflow:hidden}
+  .palette input{width:100%;border:0;outline:0;padding:18px 22px;font-size:17px;font-family:'Source Serif 4';color:var(--ink);background:transparent;border-bottom:1px solid var(--rule)}
+  .palette input::placeholder{color:var(--muted);font-style:italic}
+  .pal-list{max-height:380px;overflow:auto;padding:6px 0}
+  .pal-grp{font-family:'Fira Sans Condensed';font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.16em;font-weight:700;padding:12px 22px 4px}
+  .pal-item{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 22px;cursor:pointer;font-size:14px}
+  .pal-item:hover,.pal-item.sel{background:var(--paper-2)}
+  .pal-item .ic{width:22px;height:22px;border-radius:4px;background:var(--ink);color:var(--paper);font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-family:'Fira Sans Condensed'}
+  .pal-item .nm{color:var(--ink)}
+  .pal-item .sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+  .pal-foot{padding:8px 22px;border-top:1px solid var(--rule);font-size:11px;color:var(--muted);font-family:'Fira Sans Condensed';display:flex;justify-content:space-between;letter-spacing:.08em;text-transform:uppercase}
+
+  /* drawer */
+  .drawer-bg{position:fixed;inset:0;background:rgba(27,24,21,.4);display:none;z-index:90}
+  .drawer-bg.show{display:block}
+  .drawer{position:fixed;top:0;right:0;width:520px;height:100vh;background:var(--paper);border-left:1px solid var(--rule-2);box-shadow:-16px 0 40px rgba(27,24,21,.2);transform:translateX(100%);transition:transform .22s cubic-bezier(.2,.7,.2,1);z-index:91;display:flex;flex-direction:column}
+  .drawer.show{transform:translateX(0)}
+  .drawer-head{padding:24px 28px;border-bottom:2px solid var(--ink)}
+  .drawer-head .id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);font-weight:600;margin-bottom:6px}
+  .drawer-head h3{font-family:'Source Serif 4';font-weight:800;font-size:24px;letter-spacing:-.015em;margin:0 0 6px;line-height:1.2}
+  .drawer-head .sub{font-family:'Fira Sans Condensed';font-size:11.5px;color:var(--mid);letter-spacing:.08em;text-transform:uppercase}
+  .drawer-body{padding:24px 28px;overflow:auto;flex:1}
+  .drawer-section{margin-bottom:24px}
+  .drawer-section h4{margin:0 0 10px;font-family:'Fira Sans Condensed';font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--blue);font-weight:700}
+  .drawer-section p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+  .field-row{display:grid;grid-template-columns:100px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--rule);font-size:13.5px}
+  .field-row:first-child{border-top:0}
+  .field-row .k{color:var(--muted);font-family:'Fira Sans Condensed';font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;padding-top:3px}
+  .drawer-foot{padding:18px 28px;border-top:1px solid var(--rule);display:flex;gap:8px}
+
+  .status-menu{position:absolute;background:var(--paper);border:1px solid var(--rule-2);border-radius:6px;box-shadow:0 12px 28px rgba(27,24,21,.18);padding:4px 0;min-width:160px;z-index:120;display:none}
+  .status-menu.show{display:block}
+  .status-menu .opt{display:flex;align-items:center;gap:9px;padding:9px 14px;font-family:'Fira Sans Condensed';font-size:13px;letter-spacing:.04em;cursor:pointer;color:var(--ink)}
+  .status-menu .opt:hover{background:var(--paper-2)}
+  .status-menu .opt i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  .toast{position:fixed;bottom:28px;right:28px;background:var(--ink);color:var(--paper);padding:13px 18px;border-radius:6px;font-family:'Fira Sans Condensed';font-size:13.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 14px 32px rgba(27,24,21,.32);transform:translateY(20px);opacity:0;transition:all .22s ease;z-index:140;display:flex;align-items:center;gap:10px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast .ico{width:20px;height:20px;background:var(--sage);color:var(--ink);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+
+  .home-link{position:fixed;top:18px;right:18px;background:var(--paper);border:1px solid var(--rule-2);border-radius:6px;padding:6px 12px;font-family:'Fira Sans Condensed';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);text-decoration:none;z-index:50}
+  .home-link:hover{color:var(--ink);border-color:var(--ink)}
+
+  @media (max-width:1100px){
+    main{grid-template-columns:1fr 720px 1fr}
+  }
+  @media (max-width:1024px){
+    main{grid-template-columns:1fr;column-gap:0}
+    aside.gutter{padding-top:0;text-align:left !important}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="left">
+    <span class="v"><span class="brand-mark">V</span>Vimit Converters Ltd · Programme Office</span>
+  </div>
+  <div class="title">VCL PMO<span class="sub">No. 27 · Wed 27 May 2026</span></div>
+  <div class="right">
+    <button class="kbd-hint" onclick="openPalette()">Search · <kbd>&#8984;</kbd><kbd>K</kbd></button>
+    <span class="user-pill"><span class="av">TH</span> Tanuj</span>
+  </div>
+</header>
+
+<div class="ribbon">
+  <span><b>Edition</b> · auto-refresh on · last update <b id="last-update">07:48 EAT</b></span>
+  <nav id="ribbon-nav">
+    <a class="active" data-jump="memo">Briefing</a>
+    <a data-jump="queue">Queue</a>
+    <a data-jump="requirements">Requirements</a>
+    <a data-jump="timeline">Timeline</a>
+  </nav>
+</div>
+
+<main>
+  <aside class="gutter left">
+    <div class="block">
+      <div class="label">Active</div>
+      <div class="stat">3<sub>/4</sub></div>
+      <ul>
+        <li><b>HR & Payroll</b> live</li>
+        <li><b>Imports Portal</b> phase 1</li>
+        <li><b>ERP↔QBO AR</b> 60%</li>
+      </ul>
+    </div>
+    <div class="block">
+      <div class="label">Requirements</div>
+      <div class="stat" id="g-done">10</div>
+      <ul>
+        <li><b id="g-blocked">1</b> blocked</li>
+        <li><b id="g-review">1</b> in review</li>
+        <li><b>0</b> UAT failing</li>
+      </ul>
+    </div>
+    <div class="block">
+      <div class="label">Issued by</div>
+      <ul>
+        <li><b>codex-cli</b> dev agent</li>
+        <li><b>claude-code</b> dev agent</li>
+        <li><b>Tanuj Haria</b> editor</li>
+      </ul>
+    </div>
+  </aside>
+
+  <article class="memo" id="memo">
+    <div class="eyebrow"><span class="dot"></span>Live edition · refreshes on save</div>
+    <h1>Three live, one in build<em>.</em><br>One needs you before June<em>.</em></h1>
+    <p class="deck">HR &amp; Payroll went live this morning with the May 2026 cycle — ninety-seven slips, 0.49% variance against Jitu's books. One outstanding requirement must be fixed before the June cycle. Codex-CLI is mid-build on this very interface.</p>
+    <div class="byline">
+      <span><b>By</b> the Programme Office &nbsp;·&nbsp; <b>For</b> the CFO</span>
+      <span>3 active &nbsp;·&nbsp; <span id="byline-done">10</span> done &nbsp;·&nbsp; <span id="byline-blocked">1</span> blocked</span>
+    </div>
+
+    <p class="lead">Three projects were active at sunrise. <a class="ref" onclick="openDrawer('VCL-DEV-HR-001-project')">HR &amp; Payroll</a> went <span class="pill-inline">Live</span> with the May 2026 cycle: ninety-seven salary slips were submitted, a 0.49% variance was recorded against Jitu's books, and the residual gap was explained by five director-level exceptions. After eighteen months of unsuccessful attempts, payroll is finally an internal capability.</p>
+
+    <p class="pull">"Variance 0.49% against the bookkeeper's parallel run. Closure on a problem we have carried for eighteen months."</p>
+
+    <p>One requirement, however, needs attention before the June cycle: <a class="ref" onclick="openDrawer('HR-002')">HR-002 — Salary Structure formulas</a> on VCL, BIL, and BVL. The trial run on Joan's salary structure (the working reference, <code>VCL Joan Trial 2026-05 v2</code>) demonstrated the correct inline formula <code>B + HseAlw</code>. A thirty-minute REST patch will propagate it. Today.</p>
+
+    <p>Beyond payroll, the <a class="ref" onclick="setView('queue')">Imports Portal</a> is in Phase 1 — Frappe scaffold up, SUPP → ERP mirror running daily, PR workflow next. The <a class="ref" onclick="setView('queue')">ERP↔QBO AR Alignment</a> reconciliation is sixty percent complete but gated on five CFO decisions before the SI↔SO matcher can build. The decisions sit with the editor of this memo.</p>
+
+    <p><code>codex-cli</code> is mid-build on <a class="ref" onclick="openDrawer('PMO-001')">VCL-DEV-PMO-001</a> — the very interface you are reading. On completion the agent will POST <code>/pmo/api/agent/complete</code>, write its work log to <code>vcl-pmo-context</code>, and Telegram-notify. By tomorrow morning, this briefing should render itself from data, not from prose.</p>
+
+    <p class="small-caps">In the appendices · Queue · Requirements · Timeline</p>
+  </article>
+
+  <aside class="gutter right">
+    <div class="block">
+      <div class="label">Actions</div>
+      <div class="btn-stack">
+        <button class="btn primary" onclick="toast('Briefing rendered to PDF')">Render to PDF</button>
+        <button class="btn" onclick="toast('Sent to Telegram')">Send to Telegram</button>
+        <button class="btn" onclick="setView('queue')">Open Queue</button>
+        <button class="btn ghost" onclick="toast('Subscribe set')">Daily email</button>
+      </div>
+    </div>
+    <div class="block">
+      <div class="label">Today's queue</div>
+      <ul id="g-queue"></ul>
+    </div>
+  </aside>
+</main>
+
+<!-- APPENDICES -->
+<section class="appendix">
+
+  <div class="app-section" id="queue">
+    <h2 class="title">The Queue <small>4 items · click to act</small></h2>
+    <div class="queue" id="queue-list"></div>
+  </div>
+
+  <div class="app-section" id="requirements">
+    <h2 class="title">Requirements <small>full register · click any status to change</small></h2>
+    <table class="tbl">
+      <thead><tr><th>ID</th><th>Requirement</th><th>Project</th><th>Owner</th><th>UAT</th><th>Status</th></tr></thead>
+      <tbody id="req-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="app-section" id="timeline">
+    <h2 class="title">Timeline <small>project lanes · May → October 2026</small></h2>
+    <div class="tl">
+      <div class="tl-grid">
+        <div class="tl-cell h">Project</div>
+        <div class="tl-cell h">May</div><div class="tl-cell h">Jun</div><div class="tl-cell h">Jul</div><div class="tl-cell h">Aug</div><div class="tl-cell h">Sep</div><div class="tl-cell h">Oct</div>
+
+        <div class="tl-cell lbl">HR &amp; Payroll</div>
+        <div class="tl-cell"><span class="bar-mini green"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">Imports Portal</div>
+        <div class="tl-cell"></div>
+        <div class="tl-cell"><span class="bar-mini"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">ERP↔QBO AR</div>
+        <div class="tl-cell"></div><div class="tl-cell"></div>
+        <div class="tl-cell"><span class="bar-mini amber"></span></div>
+        <div class="tl-cell"><span class="bar-mini partial"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div>
+
+        <div class="tl-cell lbl">PMO Interface</div>
+        <div class="tl-cell"><span class="bar-mini blocked"></span></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<a class="home-link" href="./">&larr; back to mixes</a>
+
+<div class="palette-overlay" id="palette" onclick="if(event.target===this)closePalette()">
+  <div class="palette">
+    <input id="pal-input" placeholder="Search the edition or run a command…" autocomplete="off">
+    <div class="pal-list" id="pal-list"></div>
+    <div class="pal-foot"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> · <kbd>&#9166;</kbd> · <kbd>esc</kbd></span><span>VCL PMO · Memo</span></div>
+  </div>
+</div>
+
+<div class="drawer-bg" id="drawer-bg" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><div class="id" id="d-id">—</div><h3 id="d-title">—</h3><div class="sub" id="d-sub">—</div></div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot">
+    <button class="btn primary" onclick="toast('Agent dispatched')">Dispatch agent</button>
+    <button class="btn" onclick="toast('Opened in ERPNext')">Open in ERPNext</button>
+    <button class="btn ghost" onclick="closeDrawer()">Close</button>
+  </div>
+</aside>
+
+<div class="status-menu" id="status-menu"></div>
+<div class="toast" id="toast"><span class="ico">&#10003;</span><span id="toast-text">Done</span></div>
+
+<script src="./seed.js"></script>
+<script>
+  const MIX = "d";
+  let reqs = VCL.getReqs(MIX);
+  let palSel = 0, palItems = [];
+
+  function setView(jump){
+    document.getElementById(jump).scrollIntoView({behavior:"smooth",block:"start"});
+    document.querySelectorAll("#ribbon-nav a").forEach(a=>a.classList.toggle("active", a.dataset.jump===jump));
+    closePalette();
+  }
+  document.querySelectorAll("#ribbon-nav a").forEach(a=>a.addEventListener("click",()=>setView(a.dataset.jump)));
+
+  function statusChip(s,id){
+    const c = VCL.STATUS_COLOUR[s]||"muted";
+    return `<span class="chip ${c}" data-reqid="${id}" onclick="event.stopPropagation();openStatusMenu(event,'${id}')"><i></i>${s}</span>`;
+  }
+
+  function renderGutter(){
+    const done = reqs.filter(r=>r.status==="Done").length;
+    const blocked = reqs.filter(r=>r.status==="Blocked").length;
+    const review = reqs.filter(r=>r.status==="In Review").length;
+    document.getElementById("g-done").innerText = done;
+    document.getElementById("g-blocked").innerText = blocked;
+    document.getElementById("g-review").innerText = review;
+    document.getElementById("byline-done").innerText = done;
+    document.getElementById("byline-blocked").innerText = blocked;
+    const q = reqs.filter(r=>r.needs_action || r.status==="Blocked").slice(0,4);
+    document.getElementById("g-queue").innerHTML = q.map(r=>`<li><b>${r.id}</b> ${(r.note||r.area).substring(0,40)}…</li>`).join("");
+  }
+
+  function renderQueue(){
+    const q = reqs.filter(r=>r.needs_action || r.status==="Blocked");
+    document.getElementById("queue-list").innerHTML = q.map(r=>{
+      const cls = r.status==="Blocked" ? "blk" : (r.status==="In Review" ? "warn" : "done");
+      const sym = r.status==="Blocked" ? "!" : (r.status==="In Review" ? "!" : "✓");
+      return `<div class="queue-row" onclick="openDrawer('${r.id}')">
+        <span class="dot ${cls}">${sym}</span>
+        <div class="q-body"><div class="ttl">${r.id} · ${r.requirement}</div>
+          <div class="meta">${r.project} · ${r.note||r.area} · ${r.owner}</div></div>
+        ${statusChip(r.status,r.id)}
+        <div class="q-actions">
+          <button class="btn primary" onclick="event.stopPropagation();toast('Agent dispatched on ${r.id}')">Dispatch</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderReqTable(){
+    document.getElementById("req-tbody").innerHTML = reqs.map(r=>`
+      <tr onclick="openDrawer('${r.id}')">
+        <td class="id-cell">${r.id}</td>
+        <td>${r.requirement}</td>
+        <td><span class="mono" style="color:var(--muted);font-size:11.5px">${r.project}</span></td>
+        <td><span class="mono" style="color:var(--muted);font-size:11.5px">${r.owner}</span></td>
+        <td><span class="chip ${r.uat==='Pass'?'green':'muted'}"><i></i>${r.uat}</span></td>
+        <td>${statusChip(r.status,r.id)}</td>
+      </tr>`).join("");
+  }
+
+  function renderAll(){ renderGutter(); renderQueue(); renderReqTable(); }
+
+  function openStatusMenu(ev,id){
+    const m = document.getElementById("status-menu");
+    m.innerHTML = VCL.STATUS_ORDER.map(s=>{
+      const c = VCL.STATUS_COLOUR[s];
+      const col = c==="green"?"var(--green)":c==="amber"?"var(--amber)":c==="blue"?"var(--blue)":c==="red"?"var(--red)":"var(--muted)";
+      return `<div class="opt" onclick="setStatus('${id}','${s}')"><i style="background:${col}"></i>${s}</div>`;
+    }).join("");
+    const r = ev.target.getBoundingClientRect();
+    m.style.left = r.left+"px"; m.style.top = (r.bottom+4)+"px";
+    m.classList.add("show");
+    document.addEventListener("click", closeStatusMenu, {once:true});
+  }
+  function closeStatusMenu(){ document.getElementById("status-menu").classList.remove("show"); }
+  function setStatus(id,s){
+    const r = reqs.find(x=>x.id===id);
+    if(r){ r.status=s; VCL.saveState(MIX,reqs); renderAll(); toast(`${id} → ${s}`); }
+    closeStatusMenu();
+  }
+
+  function openDrawer(id){
+    closeStatusMenu();
+    let title,sub,body,idLabel;
+    if(id.endsWith("-project")){
+      const p = VCL.PROJECTS.find(x=>x.id===id.replace("-project",""));
+      if(!p) return;
+      idLabel = p.id; title = p.name;
+      sub = `${p.system} · ${p.status} · go-live ${p.go_live}`;
+      const projReqs = reqs.filter(r=>r.project===p.id);
+      body = `<div class="drawer-section"><h4>Particulars</h4>
+        <div class="field-row"><span class="k">System</span><span>${p.system}</span></div>
+        <div class="field-row"><span class="k">Requestor</span><span>${p.requestor}</span></div>
+        <div class="field-row"><span class="k">Priority</span><span>${p.priority}</span></div>
+        <div class="field-row"><span class="k">Go-live</span><span>${p.go_live}</span></div>
+        <div class="field-row"><span class="k">Progress</span><span>${p.progress}%</span></div></div>
+        <div class="drawer-section"><h4>Requirements (${projReqs.length})</h4>
+        ${projReqs.map(r=>`<div class="field-row"><span class="k">${r.id}</span><span>${r.requirement.substring(0,48)}${r.requirement.length>48?'…':''} ${statusChip(r.status,r.id)}</span></div>`).join("")}</div>`;
+    } else {
+      const r = reqs.find(x=>x.id===id);
+      if(!r) return;
+      idLabel = r.id; title = r.requirement;
+      sub = `${r.project} · ${r.area} · ${r.priority}`;
+      body = `<div class="drawer-section"><h4>State</h4>
+        <div class="field-row"><span class="k">Status</span><span>${statusChip(r.status,r.id)}</span></div>
+        <div class="field-row"><span class="k">UAT</span><span><span class="chip ${r.uat==='Pass'?'green':'muted'}"><i></i>${r.uat}</span></span></div>
+        <div class="field-row"><span class="k">Owner</span><span class="mono">${r.owner}</span></div>
+        <div class="field-row"><span class="k">Project</span><span class="mono">${r.project}</span></div></div>
+        ${r.note?`<div class="drawer-section"><h4>Editor's note</h4><p>${r.note}</p></div>`:""}
+        <div class="drawer-section"><h4>Activity</h4>
+        ${VCL.FEED.filter(f=>f.target===r.id).map(f=>`<div class="field-row"><span class="k">${f.ts}</span><span><code>${f.actor}</code> ${f.verb} ${f.to?'→ <b>'+f.to+'</b>':''}</span></div>`).join("")||'<p style="color:var(--muted)">No activity.</p>'}</div>`;
+    }
+    document.getElementById("d-id").innerText = idLabel;
+    document.getElementById("d-title").innerText = title;
+    document.getElementById("d-sub").innerText = sub;
+    document.getElementById("d-body").innerHTML = body;
+    document.getElementById("drawer").classList.add("show");
+    document.getElementById("drawer-bg").classList.add("show");
+  }
+  function closeDrawer(){ document.getElementById("drawer").classList.remove("show"); document.getElementById("drawer-bg").classList.remove("show"); }
+
+  function openPalette(){ document.getElementById("palette").classList.add("show"); const i=document.getElementById("pal-input"); i.value=""; i.focus(); renderPalette(""); }
+  function closePalette(){ document.getElementById("palette").classList.remove("show"); }
+  function paletteItems(q){
+    q = (q||"").toLowerCase();
+    const actions = [
+      { ic:"+", nm:"File new requirement", sub:"action", fn:()=>{toast("New requirement");closePalette()} },
+      { ic:"→", nm:"Dispatch agent on selected", sub:"action", fn:()=>{toast("Agent dispatched");closePalette()} },
+      { ic:"§", nm:"Jump to Queue", sub:"section", fn:()=>setView("queue") },
+      { ic:"§", nm:"Jump to Requirements", sub:"section", fn:()=>setView("requirements") },
+      { ic:"§", nm:"Jump to Timeline", sub:"section", fn:()=>setView("timeline") },
+      { ic:"§", nm:"Jump to Briefing", sub:"section", fn:()=>setView("memo") }
+    ];
+    const reqMatches = reqs.filter(r=>!q || r.id.toLowerCase().includes(q) || r.requirement.toLowerCase().includes(q)).slice(0,8)
+      .map(r=>({ ic:r.id.split("-")[0], nm:`${r.id} — ${r.requirement.substring(0,50)}${r.requirement.length>50?'…':''}`, sub:r.project, fn:()=>{openDrawer(r.id);closePalette()} }));
+    const projMatches = VCL.PROJECTS.filter(p=>!q || p.name.toLowerCase().includes(q)).slice(0,4)
+      .map(p=>({ ic:"#", nm:p.name, sub:p.id, fn:()=>{openDrawer(p.id+'-project');closePalette()} }));
+    const actMatches = q ? actions.filter(a=>a.nm.toLowerCase().includes(q)) : actions.slice(0,4);
+    return [["Actions",actMatches],["Requirements",reqMatches],["Projects",projMatches]];
+  }
+  function renderPalette(q){
+    const groups = paletteItems(q);
+    palItems = []; let html = "";
+    groups.forEach(([title, items])=>{
+      if(!items.length) return;
+      html += `<div class="pal-grp">${title}</div>`;
+      items.forEach(it=>{
+        const idx = palItems.length; palItems.push(it);
+        html += `<div class="pal-item" data-idx="${idx}" onclick="palItems[${idx}].fn()"><span class="ic">${it.ic}</span><span class="nm">${it.nm}</span><span class="sub">${it.sub}</span></div>`;
+      });
+    });
+    document.getElementById("pal-list").innerHTML = html || `<div class="pal-grp">No matches</div>`;
+    palSel = 0; updatePalSel();
+  }
+  function updatePalSel(){
+    document.querySelectorAll(".pal-item").forEach((el,i)=>el.classList.toggle("sel", i===palSel));
+    const sel = document.querySelector(".pal-item.sel"); if(sel) sel.scrollIntoView({block:"nearest"});
+  }
+  document.getElementById("pal-input").addEventListener("input", e=>renderPalette(e.target.value));
+  document.addEventListener("keydown", e=>{
+    if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openPalette(); return; }
+    if(e.key==="Escape"){ closePalette(); closeDrawer(); closeStatusMenu(); return; }
+    if(document.getElementById("palette").classList.contains("show")){
+      if(e.key==="ArrowDown"){ e.preventDefault(); palSel = Math.min(palItems.length-1, palSel+1); updatePalSel(); }
+      if(e.key==="ArrowUp"){ e.preventDefault(); palSel = Math.max(0, palSel-1); updatePalSel(); }
+      if(e.key==="Enter" && palItems[palSel]){ e.preventDefault(); palItems[palSel].fn(); }
+    }
+  });
+
+  let toastTimer;
+  function toast(msg){ const t=document.getElementById("toast"); document.getElementById("toast-text").innerText=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
+
+  renderAll();
+</script>
+</body>
+</html>

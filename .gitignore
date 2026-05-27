@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+.env.local
+
+# Local data — never commit live SQLite or sync caches
+*.db
+*.db-journal
+app/data/
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+nohup.out
+
+# Frappe artifacts
+*.sql
+*.tar
+sites/
+
+# Local mockup server log
+pmo_mockups.log
