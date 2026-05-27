@@ -15,6 +15,8 @@ class VCLPMOPage {
       caseKind: null,
       caseId: null,
       runName: null,
+      planId: null,
+      shiftId: null,
       summary: {},
       projects: [],
       requirements: [],
@@ -25,6 +27,9 @@ class VCLPMOPage {
       packet: null,
       overview: null,
       gantt: null,
+      plans: [],
+      shifts: [],
+      planDetail: null,
       dragging: null,
     };
     this.$root = $(this.shell()).appendTo(this.page.main);
@@ -74,6 +79,8 @@ class VCLPMOPage {
     this.$root.on("click", "[data-doc]", (event) => this.openDocument(event.currentTarget.dataset.doc));
     this.$root.on("click", "[data-case]", (event) => this.openCase(event.currentTarget.dataset.kind, event.currentTarget.dataset.case));
     this.$root.on("click", "[data-run]", (event) => this.openRun(event.currentTarget.dataset.kind, event.currentTarget.dataset.run));
+    this.$root.on("click", "[data-plan]", (event) => this.openPlan(event.currentTarget.dataset.plan));
+    this.$root.on("click", "[data-shift]", (event) => this.openShift(event.currentTarget.dataset.shift));
     this.$root.on("mousedown", "[data-gantt-task]", (event) => this.startDrag(event));
     $(document).on("mousemove.pmo", (event) => this.dragGantt(event));
     $(document).on("mouseup.pmo", () => this.endDrag());
@@ -117,17 +124,19 @@ class VCLPMOPage {
   }
 
   async loadProject(projectId) {
-    const [packet, overview, gantt, docs] = await Promise.all([
+    const [packet, overview, gantt, docs, plans, shifts] = await Promise.all([
       this.call("vcl_pmo_doctypes.api.project_packet", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_overview", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_gantt", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.documents_for", { project_id: projectId }),
+      this.call("vcl_pmo_doctypes.api.project_plans", { project_id: projectId }),
+      this.call("vcl_pmo_doctypes.api.project_shifts", { project_id: projectId }),
     ]);
-    Object.assign(this.state, { packet, overview, gantt, docs });
+    Object.assign(this.state, { packet, overview, gantt, docs, plans, shifts });
   }
 
   pushState() {
-    history.pushState({ view: this.state.view, project: this.state.project, subtab: this.state.subtab, caseKind: this.state.caseKind, caseId: this.state.caseId, runName: this.state.runName }, "", `/app/pmo#${encodeURIComponent(this.state.view)}`);
+    history.pushState({ view: this.state.view, project: this.state.project, subtab: this.state.subtab, caseKind: this.state.caseKind, caseId: this.state.caseId, runName: this.state.runName, planId: this.state.planId, shiftId: this.state.shiftId }, "", `/app/pmo#${encodeURIComponent(this.state.view)}`);
   }
 
   setPortfolioView(view) {
@@ -159,10 +168,21 @@ class VCLPMOPage {
     if (name === "refresh") return this.refresh();
     if (name === "new-requirement") return this.modalRequirement();
     if (name === "back-portfolio") return this.setPortfolioView("projects");
+    if (name === "back-project") return this.openProject(this.state.project, this.state.subtab || "plans");
     if (name === "new-uat-run") return this.modalRun("uat", el.dataset.case);
     if (name === "new-oat-run") return this.modalRun("oat", el.dataset.case);
     if (name === "new-raid") return this.modalRAID(el.dataset.type || "Risk");
     if (name === "new-doc") return this.modalDocument();
+    if (name === "new-plan") return this.modalPlan();
+    if (name === "add-plan-item") return this.modalAddPlanItem(el.dataset.plan);
+    if (name === "new-shift") return this.modalNewShift();
+    if (name === "allocate-claude") return this.bulkAllocate(el.dataset.plan, "claude");
+    if (name === "allocate-codex") return this.bulkAllocate(el.dataset.plan, "codex");
+    if (name === "allocate-human") return this.bulkAllocate(el.dataset.plan, "human");
+    if (name === "start-shift") return this.shiftAction(el.dataset.shift, "start");
+    if (name === "complete-shift") return this.modalCompleteShift(el.dataset.shift);
+    if (name === "block-shift") return this.modalBlockShift(el.dataset.shift);
+    if (name === "dispatch-shift") return this.dispatchShift(el.dataset.shift);
     if (name === "open-desk") return window.open(`/app/${encodeURIComponent(el.dataset.doctype.toLowerCase().replaceAll(" ", "-"))}/${encodeURIComponent(el.dataset.name)}`, "_blank");
     if (name === "close-overlay") return this.closeOverlay();
   }
@@ -172,6 +192,8 @@ class VCLPMOPage {
     if (this.state.view === "project") return this.renderProject();
     if (this.state.view === "case") return this.renderCase();
     if (this.state.view === "run") return this.renderRun();
+    if (this.state.view === "plan") return this.renderPlan();
+    if (this.state.view === "shift") return this.renderShift();
   }
 
   renderTabs(items, active, attr = "data-view") {
@@ -216,10 +238,12 @@ class VCLPMOPage {
 
   renderProject() {
     const p = this.state.packet?.project || {};
-    this.$root.find("[data-tabs]").html(`<div class="pmo-subtabs"><button data-action="back-portfolio">Portfolio</button>${[["overview","Overview"],["timeline","Timeline"],["open","Open Items"],["milestones","Milestones"],["raid","RAID"],["uat","UAT"],["oat","OAT"],["history","Test History"],["documentation","Documentation"],["activity","Activity"]].map(i => `<button data-subtab="${i[0]}" class="${this.state.subtab === i[0] ? "active" : ""}">${i[1]}</button>`).join("")}</div>`);
+    this.$root.find("[data-tabs]").html(`<div class="pmo-subtabs"><button data-action="back-portfolio">Portfolio</button>${[["overview","Overview"],["timeline","Timeline"],["open","Open Items"],["plans","Plans"],["shifts","Shifts"],["milestones","Milestones"],["raid","RAID"],["uat","UAT"],["oat","OAT"],["history","Test History"],["documentation","Documentation"],["activity","Activity"]].map(i => `<button data-subtab="${i[0]}" class="${this.state.subtab === i[0] ? "active" : ""}">${i[1]}</button>`).join("")}</div>`);
     if (this.state.subtab === "overview") return this.renderProjectOverview(p);
     if (this.state.subtab === "timeline") return this.renderTimeline();
     if (this.state.subtab === "open") return this.renderOpenItems();
+    if (this.state.subtab === "plans") return this.renderPlans();
+    if (this.state.subtab === "shifts") return this.renderShifts();
     if (this.state.subtab === "milestones") return this.renderMilestones();
     if (this.state.subtab === "raid") return this.renderProjectRAID();
     if (this.state.subtab === "uat") return this.renderProjectCases("uat");
@@ -338,8 +362,158 @@ class VCLPMOPage {
   formValues() { const values = {}; this.$overlay.find("[data-field]").each((_, el) => values[el.dataset.field] = $(el).val()); return values; }
   formDoc(doctype) { return Object.assign({ doctype }, this.formValues()); }
 
-  chip(value) { const v = value || ""; const tone = ["Done","Pass","Achieved","Closed"].includes(v) ? "green" : ["In Review","In Progress","Mitigating","At Risk"].includes(v) ? "amber" : ["Blocked","Fail","Missed","Critical"].includes(v) ? "red" : "blue"; return `<span class="pmo-chip ${tone}">${this.esc(v)}</span>`; }
+  chip(value) { const v = value || ""; const tone = ["Done","Pass","Achieved","Closed"].includes(v) ? "green" : ["In Review","In Progress","Mitigating","At Risk","Allocated","Proposed"].includes(v) ? "amber" : ["Blocked","Fail","Missed","Critical","Cancelled"].includes(v) ? "red" : "blue"; return `<span class="pmo-chip ${tone}">${this.esc(v)}</span>`; }
   renderMD(md) { return this.esc(md || "").replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>").replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>"); }
   date(value) { return value ? String(value).slice(0, 16) : ""; }
   esc(value) { return frappe.utils.escape_html(String(value ?? "")); }
+
+  // ==========================================================================
+  // Plans & Shifts
+  // ==========================================================================
+
+  async openPlan(planName) {
+    const plan = this.state.plans.find(p => p.name === planName || p.plan_id === planName);
+    const planId = plan ? plan.plan_id : planName;
+    const detail = await this.call("vcl_pmo_doctypes.api.plan_detail", { plan_id: planId });
+    Object.assign(this.state, { view: "plan", planId, planDetail: detail });
+    this.pushState();
+    this.render();
+  }
+
+  async openShift(shiftName) {
+    const shift = this.state.shifts.find(s => s.name === shiftName || s.shift_id === shiftName);
+    const shiftId = shift ? shift.shift_id : shiftName;
+    Object.assign(this.state, { view: "shift", shiftId });
+    this.pushState();
+    this.render();
+  }
+
+  renderPlans() {
+    const plans = this.state.plans || [];
+    this.$body.html(`${this.head("Plans", "Planning proposals for this project. Each plan generates Milestones, Tasks, RAID, Shifts — with UAT/OAT auto-created where ticked.")}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-plan">New Plan</button></div><table class="pmo-table"><thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Planner</th><th>Created</th></tr></thead><tbody>${plans.map(p => `<tr data-plan="${p.name}"><td class="pmo-mono">${this.esc(p.plan_id)}</td><td>${this.esc(p.title)}</td><td>${this.chip(p.status)}</td><td>${this.esc(p.planner || "")}</td><td>${this.date(p.created_at)}</td></tr>`).join("") || "<tr><td colspan='5' class='pmo-muted'>No plans yet. Click New Plan to create one.</td></tr>"}</tbody></table>`);
+  }
+
+  renderShifts() {
+    const shifts = this.state.shifts || [];
+    const groups = { claude: [], codex: [], human: [] };
+    shifts.forEach(s => { (groups[s.assigned_to] || (groups[s.assigned_to] = [])).push(s); });
+    this.$body.html(`${this.head("Shifts", "Work allocated to claude, codex, or human — with status and UAT/OAT links")}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-shift">New Shift</button></div>${["claude","codex","human"].map(a => `<h3>${a[0].toUpperCase() + a.slice(1)}</h3>${this.shiftTable(groups[a] || [])}`).join("")}`);
+  }
+
+  shiftTable(rows) {
+    if (!rows.length) return "<div class='pmo-card pmo-muted'>No shifts in this queue.</div>";
+    return `<table class="pmo-table"><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Status</th><th>Planned</th><th>UAT</th><th>OAT</th><th>Actions</th></tr></thead><tbody>${rows.map(s => `<tr data-shift="${s.name}"><td class="pmo-mono">${this.esc(s.shift_id)}</td><td>${this.esc(s.title)}</td><td>${this.esc(s.shift_type)}</td><td>${this.chip(s.status)}</td><td>${this.date(s.planned_start)} → ${this.date(s.planned_end)}</td><td>${s.requires_uat ? "✓" : ""}</td><td>${s.requires_oat ? "✓" : ""}</td><td>${this.shiftActionBtns(s)}</td></tr>`).join("")}</tbody></table>`;
+  }
+
+  shiftActionBtns(s) {
+    const isAgent = s.assigned_to === "claude" || s.assigned_to === "codex";
+    if (s.status === "Allocated" || s.status === "Proposed") {
+      const dispatch = isAgent ? `<button class="pmo-btn pmo-small primary" data-action="dispatch-shift" data-shift="${s.shift_id}" title="Send to n8n → ${s.assigned_to}">Execute via n8n</button> ` : "";
+      return `${dispatch}<button class="pmo-btn pmo-small" data-action="start-shift" data-shift="${s.shift_id}">Start</button>`;
+    }
+    if (s.status === "In Progress") return `<button class="pmo-btn pmo-small" data-action="complete-shift" data-shift="${s.shift_id}">Complete</button> <button class="pmo-btn pmo-small" data-action="block-shift" data-shift="${s.shift_id}">Block</button>`;
+    return "";
+  }
+
+  async renderPlan() {
+    const detail = this.state.planDetail || { plan: {}, items: [] };
+    const plan = detail.plan;
+    const items = detail.items;
+    this.$root.find("[data-tabs]").html("");
+    const checkboxes = items.map((it, i) => `<tr><td><input type="checkbox" class="pmo-plan-check" data-idx="${i}" ${it.promoted_to_doctype ? "disabled" : ""}></td><td class="pmo-mono">${this.esc(it.item_type)}</td><td>${this.esc(it.title)}</td><td>${this.esc((it.description || "").slice(0, 80))}</td><td>${it.needs_uat ? "✓" : ""}</td><td>${it.needs_oat ? "✓" : ""}</td><td>${this.esc(it.assignee_hint || "")}</td><td>${it.promoted_to_doctype ? `${this.esc(it.promoted_to_doctype)}<br><span class="pmo-mono">${this.esc(it.promoted_to_name)}</span>` : "<span class='pmo-muted'>not allocated</span>"}</td></tr>`).join("");
+    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Plans", plan.plan_id])}${this.head(plan.title || plan.plan_id, `${plan.status} · ${items.length} proposed item${items.length === 1 ? "" : "s"}`)}<div class="pmo-card pmo-markdown">${this.renderMD(plan.description || "No description.")}</div><div class="pmo-actions"><button class="pmo-btn primary" data-action="add-plan-item" data-plan="${plan.plan_id}">Add Item</button><button class="pmo-btn" data-action="allocate-claude" data-plan="${plan.plan_id}">Allocate selected to Claude</button><button class="pmo-btn" data-action="allocate-codex" data-plan="${plan.plan_id}">Allocate selected to Codex</button><button class="pmo-btn" data-action="allocate-human" data-plan="${plan.plan_id}">Allocate selected to Human</button></div><table class="pmo-table"><thead><tr><th><input type="checkbox" id="pmo-plan-check-all"></th><th>Type</th><th>Title</th><th>Description</th><th>UAT</th><th>OAT</th><th>Hint</th><th>Promoted</th></tr></thead><tbody>${checkboxes || "<tr><td colspan='8' class='pmo-muted'>No items. Click Add Item to start.</td></tr>"}</tbody></table>`);
+    this.$body.find("#pmo-plan-check-all").on("change", (e) => {
+      const checked = e.currentTarget.checked;
+      this.$body.find(".pmo-plan-check:not(:disabled)").prop("checked", checked);
+    });
+  }
+
+  async renderShift() {
+    const shiftName = (this.state.shifts.find(s => s.shift_id === this.state.shiftId) || {}).name || this.state.shiftId;
+    const shift = await frappe.db.get_doc("PMO Shift", shiftName);
+    this.$root.find("[data-tabs]").html("");
+    const actions = [];
+    if (shift.status === "Allocated" || shift.status === "Proposed") actions.push(`<button class="pmo-btn primary" data-action="start-shift" data-shift="${shift.shift_id}">Start</button>`);
+    const isAgent = shift.assigned_to === "claude" || shift.assigned_to === "codex";
+    if ((shift.status === "Allocated" || shift.status === "Proposed") && isAgent) actions.push(`<button class="pmo-btn primary" data-action="dispatch-shift" data-shift="${shift.shift_id}">Execute via n8n → ${shift.assigned_to}</button>`);
+    if (shift.status === "In Progress") { actions.push(`<button class="pmo-btn primary" data-action="complete-shift" data-shift="${shift.shift_id}">Complete</button>`); actions.push(`<button class="pmo-btn" data-action="block-shift" data-shift="${shift.shift_id}">Block</button>`); }
+    actions.push(`<button class="pmo-btn" data-action="open-desk" data-doctype="PMO Shift" data-name="${shift.name}">Open in Desk</button>`);
+    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Shifts", shift.shift_id])}${this.head(shift.title || shift.shift_id, `${shift.shift_type} · ${shift.assigned_to} · ${shift.status}`)}<div class="pmo-two-col"><div class="pmo-card pmo-markdown">${this.renderMD(shift.description || "No description.")}</div><div class="pmo-card"><p><b>Status</b><br>${this.chip(shift.status)}</p><p><b>Assigned to</b><br>${this.esc(shift.assigned_to)}</p><p><b>Planned</b><br>${this.date(shift.planned_start)} → ${this.date(shift.planned_end)}</p><p><b>Actual</b><br>${this.date(shift.actual_start)} → ${this.date(shift.actual_end)}</p><p><b>UAT Case</b><br>${shift.uat_case ? `<span class="pmo-mono">${this.esc(shift.uat_case)}</span>` : "–"}</p><p><b>OAT Check</b><br>${shift.oat_check ? `<span class="pmo-mono">${this.esc(shift.oat_check)}</span>` : "–"}</p></div></div><div class="pmo-card"><h3>Output Notes</h3><div class="pmo-markdown">${this.renderMD(shift.output_notes || "No output captured yet.")}</div></div><div class="pmo-actions">${actions.join("")}</div>`);
+  }
+
+  modalPlan() {
+    this.modal("New Plan", `<div class="pmo-form-grid"><label>Plan ID<input data-field="plan_id" placeholder="leave blank to auto-generate"></label><label>Title<input data-field="title"></label><label class="span2">Description (markdown)<textarea data-field="description" rows="4"></textarea></label></div>`, async () => {
+      const values = this.formValues();
+      await this.call("vcl_pmo_doctypes.api.create_plan", { project_id: this.state.project, title: values.title, description: values.description, items: JSON.stringify([]) });
+      this.closeOverlay();
+      await this.loadProject(this.state.project);
+      this.render();
+    });
+  }
+
+  modalAddPlanItem(planId) {
+    this.modal("Add Plan Item", `<div class="pmo-form-grid"><label>Type<select data-field="item_type"><option>Shift</option><option>Milestone</option><option>Requirement</option><option>Task</option><option>RAID</option></select></label><label>Assignee Hint<select data-field="assignee_hint"><option>unassigned</option><option>claude</option><option>codex</option><option>human</option></select></label><label class="span2">Title<input data-field="title"></label><label class="span2">Description<textarea data-field="description" rows="3"></textarea></label><label><input type="checkbox" data-field="needs_uat"> Needs UAT</label><label><input type="checkbox" data-field="needs_oat"> Needs OAT</label><label class="span2">Metadata (JSON, optional)<textarea data-field="metadata" rows="2" placeholder='e.g. {"target_date":"2026-06-15","severity":"High"}'></textarea></label></div>`, async () => {
+      const v = this.formValues();
+      const item = { item_type: v.item_type, title: v.title, description: v.description, assignee_hint: v.assignee_hint, needs_uat: this.$overlay.find('[data-field="needs_uat"]').prop("checked") ? 1 : 0, needs_oat: this.$overlay.find('[data-field="needs_oat"]').prop("checked") ? 1 : 0 };
+      if (v.metadata) { try { item.metadata = JSON.parse(v.metadata); } catch (e) { frappe.show_alert({ message: "Invalid JSON in metadata", indicator: "red" }); return; } }
+      await this.call("vcl_pmo_doctypes.api.add_plan_items", { plan_id: planId, items: JSON.stringify([item]) });
+      this.closeOverlay();
+      await this.openPlan(planId);
+    });
+  }
+
+  modalNewShift() {
+    this.modal("New Shift", `<div class="pmo-form-grid"><label>Shift ID<input data-field="shift_id" placeholder="e.g. SHIFT-MANUAL-01"></label><label>Assigned to<select data-field="assigned_to"><option>claude</option><option>codex</option><option>human</option></select></label><label class="span2">Title<input data-field="title"></label><label class="span2">Description<textarea data-field="description" rows="3"></textarea></label><label>Type<select data-field="shift_type"><option>Execution</option><option>Planning</option><option>Review</option><option>Test</option></select></label><label>Status<select data-field="status"><option>Allocated</option><option>Proposed</option></select></label><label><input type="checkbox" data-field="requires_uat"> Requires UAT</label><label><input type="checkbox" data-field="requires_oat"> Requires OAT</label></div>`, async () => {
+      const v = this.formValues();
+      const doc = { doctype: "PMO Shift", shift_id: v.shift_id, project: this.state.project, title: v.title, description: v.description, shift_type: v.shift_type, assigned_to: v.assigned_to, status: v.status, requires_uat: this.$overlay.find('[data-field="requires_uat"]').prop("checked") ? 1 : 0, requires_oat: this.$overlay.find('[data-field="requires_oat"]').prop("checked") ? 1 : 0 };
+      await frappe.db.insert(doc);
+      this.closeOverlay();
+      await this.loadProject(this.state.project);
+      this.render();
+    });
+  }
+
+  modalCompleteShift(shiftId) {
+    this.modal("Complete Shift", `<div class="pmo-form-grid"><label class="span2">Output Notes (markdown)<textarea data-field="output_notes" rows="4"></textarea></label><label>UAT Result (if shift has UAT)<select data-field="uat_result"><option value="">–</option><option>Pass</option><option>Fail</option><option>Blocked</option></select></label><label>OAT Result (if shift has OAT)<select data-field="oat_result"><option value="">–</option><option>Pass</option><option>Fail</option><option>Blocked</option></select></label></div>`, async () => {
+      const v = this.formValues();
+      await this.call("vcl_pmo_doctypes.api.complete_shift", { shift_id: shiftId, output_notes: v.output_notes, uat_result: v.uat_result || null, oat_result: v.oat_result || null });
+      this.closeOverlay();
+      await this.loadProject(this.state.project);
+      this.render();
+    });
+  }
+
+  modalBlockShift(shiftId) {
+    this.modal("Block Shift", `<div class="pmo-form-grid"><label class="span2">Reason<textarea data-field="reason" rows="3"></textarea></label></div>`, async () => {
+      const v = this.formValues();
+      await this.call("vcl_pmo_doctypes.api.block_shift", { shift_id: shiftId, reason: v.reason });
+      this.closeOverlay();
+      await this.loadProject(this.state.project);
+      this.render();
+    });
+  }
+
+  async bulkAllocate(planId, assignee) {
+    const indices = [];
+    this.$body.find(".pmo-plan-check:checked").each((_, el) => indices.push(Number(el.dataset.idx)));
+    if (!indices.length) { frappe.show_alert({ message: "Select at least one item to allocate", indicator: "amber" }); return; }
+    const result = await this.call("vcl_pmo_doctypes.api.allocate_plan_items", { plan_id: planId, item_indices: JSON.stringify(indices), assignee });
+    frappe.show_alert({ message: `Allocated ${(result.created || []).length} item${result.created && result.created.length === 1 ? "" : "s"} to ${assignee}`, indicator: "green" });
+    await this.loadProject(this.state.project);
+    await this.openPlan(planId);
+  }
+
+  async shiftAction(shiftId, action) {
+    if (action === "start") await this.call("vcl_pmo_doctypes.api.start_shift", { shift_id: shiftId });
+    await this.loadProject(this.state.project);
+    this.render();
+  }
+
+  async dispatchShift(shiftId) {
+    const result = await this.call("vcl_pmo_doctypes.api.dispatch_shift", { shift_id: shiftId });
+    if (result && result.ok) frappe.show_alert({ message: `Dispatched ${shiftId} to n8n (HTTP ${result.n8n_status}). Shift now In Progress.`, indicator: "green" });
+    else frappe.show_alert({ message: `Dispatch failed: ${(result && result.error) || "unknown"}`, indicator: "red" });
+    await this.loadProject(this.state.project);
+    this.render();
+  }
 }

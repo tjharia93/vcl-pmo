@@ -1,0 +1,146 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Shift",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "shift_id",
+      "label": "Shift ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "shift_type",
+      "label": "Shift Type",
+      "fieldtype": "Select",
+      "options": "Planning\nExecution\nReview\nTest",
+      "default": "Execution"
+    },
+    {
+      "fieldname": "assigned_to",
+      "label": "Assigned To",
+      "fieldtype": "Select",
+      "options": "claude\ncodex\nhuman",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Proposed\nAllocated\nIn Progress\nDone\nBlocked\nCancelled",
+      "default": "Proposed"
+    },
+    {
+      "fieldname": "planned_start",
+      "label": "Planned Start",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "planned_end",
+      "label": "Planned End",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "actual_start",
+      "label": "Actual Start",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "actual_end",
+      "label": "Actual End",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "requires_uat",
+      "label": "Requires UAT",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "requires_oat",
+      "label": "Requires OAT",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "uat_case",
+      "label": "UAT Case",
+      "fieldtype": "Link",
+      "options": "PMO UAT Case",
+      "description": "Auto-created on save when requires_uat is ticked"
+    },
+    {
+      "fieldname": "oat_check",
+      "label": "OAT Check",
+      "fieldtype": "Link",
+      "options": "PMO OAT Check",
+      "description": "Auto-created on save when requires_oat is ticked"
+    },
+    {
+      "fieldname": "output_notes",
+      "label": "Output Notes",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "linked_plan",
+      "label": "Linked Plan",
+      "fieldtype": "Link",
+      "options": "PMO Plan"
+    },
+    {
+      "fieldname": "linked_requirement",
+      "label": "Linked Requirement",
+      "fieldtype": "Link",
+      "options": "PMO Requirement"
+    },
+    {
+      "fieldname": "linked_milestone",
+      "label": "Linked Milestone",
+      "fieldtype": "Link",
+      "options": "PMO Milestone"
+    },
+    {
+      "fieldname": "linked_task",
+      "label": "Linked Task",
+      "fieldtype": "Link",
+      "options": "PMO Task"
+    }
+  ],
+  "autoname": "field:shift_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}
