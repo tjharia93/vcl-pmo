@@ -348,3 +348,94 @@ def log_sync(anchor, direction, status, detail="", project=None):
     })
     doc.insert(ignore_permissions=False)
     return {"ok": True, "name": doc.name}
+
+@frappe.whitelist()
+def seed_phase2():
+    _require_pmo_user()
+
+    def upsert(dt, key_field, doc):
+        name = frappe.db.get_value(dt, {key_field: doc[key_field]}, "name")
+        payload = dict(doc)
+        payload["doctype"] = dt
+        if name:
+            target = frappe.get_doc(dt, name)
+            target.update(payload)
+            target.save(ignore_permissions=False)
+            return {"doctype": dt, "key": doc[key_field], "action": "updated", "name": target.name}
+        target = frappe.get_doc(payload)
+        target.insert(ignore_permissions=False)
+        return {"doctype": dt, "key": doc[key_field], "action": "created", "name": target.name}
+
+    results = []
+    project_meta = [
+        {"project_id": "VCL-DEV-PMO-002", "project_short": "PMO", "sponsor": frappe.session.user, "project_manager": frappe.session.user, "kickoff_date": "2026-05-27", "target_completion": "2026-06-07", "current_phase": "Phase 2 Build", "charter": "# VCL PMO System\n\nBuild the Frappe-native project management system for VCL development work. Excel remains a mirror through n8n."},
+        {"project_id": "VCL-DEV-HR-001", "project_short": "HR", "current_phase": "Live"},
+        {"project_id": "VCL-DEV-IMP-001", "project_short": "IMP", "current_phase": "Active"},
+        {"project_id": "VCL-DEV-AR-001", "project_short": "AR", "current_phase": "Active"},
+    ]
+    for meta in project_meta:
+        name = _project_name(meta["project_id"])
+        if frappe.db.exists("PMO Project", name):
+            frappe.db.set_value("PMO Project", name, {k: v for k, v in meta.items() if k != "project_id"})
+            results.append({"doctype": "PMO Project", "key": meta["project_id"], "action": "updated", "name": name})
+
+    results.append(upsert("PMO Milestone", "milestone_id", {
+        "milestone_id": "MS-PMO-001",
+        "project": "VCL-DEV-PMO-002",
+        "milestone_name": "Phase 2 PM System Foundation",
+        "description": "Schema, project workspace, UAT/OAT run history, RAID and documentation foundation.",
+        "target_date": "2026-06-02",
+        "status": "In Progress",
+        "milestone_owner": frappe.session.user,
+        "weight": 40,
+    }))
+    task_rows = [
+        ("T-PMO-001", "Phase 2 schema", "PMO-002-02", "2026-05-27", "2026-05-28", "Done", 100),
+        ("T-PMO-002", "Project workspace UI", "PMO-002-03", "2026-05-28", "2026-06-01", "In Progress", 55),
+        ("T-PMO-003", "Run UAT/OAT from PMO page", "PMO-002-09", "2026-06-01", "2026-06-02", "Not Started", 0),
+    ]
+    for task_id, title, req, start, end, status, pct in task_rows:
+        results.append(upsert("PMO Task", "task_id", {
+            "task_id": task_id,
+            "project": "VCL-DEV-PMO-002",
+            "milestone": "MS-PMO-001",
+            "requirement": req,
+            "title": title,
+            "start_date": start,
+            "end_date": end,
+            "status": status,
+            "assignee": frappe.session.user,
+            "percent_complete": pct,
+        }))
+    results.append(upsert("PMO RAID Item", "raid_id", {
+        "raid_id": "RAID-PMO-0001",
+        "project": "VCL-DEV-PMO-002",
+        "type": "Dependency",
+        "title": "n8n Excel mirror workstream",
+        "description": "Excel mirror is out of Phase 2 scope but required before local FastAPI PMO retirement.",
+        "severity": "High",
+        "probability": "Medium",
+        "impact": "Cutover cannot complete until Frappe to Excel and Excel to Frappe flows pass OAT.",
+        "mitigation": "Track as PMO-002-04 and OAT-PMO-006/007/008/011/012.",
+        "status": "Open",
+        "raid_owner": frappe.session.user,
+        "raised_date": today(),
+        "due_date": "2026-06-07",
+    }))
+    docs = [
+        ("DOC-PMO-0001", "How-to", "How to record a UAT Run", "# How to record a UAT Run\n\n1. Open `/app/pmo`.\n2. Open the project workspace.\n3. Go to UAT.\n4. Open the Case.\n5. Click New Run and capture result, evidence, notes and environment."),
+        ("DOC-PMO-0002", "Workflow", "PMO weekly cadence workflow", "# PMO weekly cadence\n\nReview Inbox, Roadmap, RAID, Test Status and Sync Log. Update risks, add test runs, and confirm documentation is current."),
+    ]
+    for doc_id, doc_type, title, content in docs:
+        results.append(upsert("PMO Document", "document_id", {
+            "document_id": doc_id,
+            "project": "VCL-DEV-PMO-002",
+            "doc_type": doc_type,
+            "title": title,
+            "content_md": content,
+            "version": "1.0",
+            "status": "Live",
+            "document_owner": frappe.session.user,
+            "last_reviewed": today(),
+        }))
+    return {"ok": True, "results": results}
