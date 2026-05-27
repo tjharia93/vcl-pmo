@@ -1,0 +1,29 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Milestone Dependency",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "predecessor_milestone",
+      "label": "Predecessor Milestone",
+      "fieldtype": "Link",
+      "options": "PMO Milestone",
+      "reqd": 1
+    },
+    {
+      "fieldname": "dependency_type",
+      "label": "Dependency Type",
+      "fieldtype": "Select",
+      "options": "FS\nSS\nFF\nSF",
+      "default": "FS"
+    },
+    {
+      "fieldname": "lag_days",
+      "label": "Lag Days",
+      "fieldtype": "Int",
+      "default": 0
+    }
+  ]
+}

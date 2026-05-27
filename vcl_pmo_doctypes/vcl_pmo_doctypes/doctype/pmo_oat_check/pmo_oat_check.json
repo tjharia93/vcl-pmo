@@ -5,18 +5,78 @@
   "custom": 0,
   "autoname": "field:check_id",
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "delete": 1},
-    {"role": "PMO User", "read": 1, "write": 1, "create": 1}
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
   ],
   "fields": [
-    {"fieldname": "check_id", "label": "Check ID", "fieldtype": "Data", "reqd": 1, "unique": 1},
-    {"fieldname": "project", "label": "Project", "fieldtype": "Link", "options": "PMO Project"},
-    {"fieldname": "area", "label": "Area", "fieldtype": "Data", "reqd": 1},
-    {"fieldname": "check", "label": "Check", "fieldtype": "Text", "reqd": 1},
-    {"fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "Not Run\nPass\nFail\nBlocked", "default": "Not Run"},
-    {"fieldname": "owner", "label": "Owner", "fieldtype": "Data"},
-    {"fieldname": "last_run", "label": "Last Run", "fieldtype": "Datetime"},
-    {"fieldname": "evidence", "label": "Evidence", "fieldtype": "Long Text"},
-    {"fieldname": "notes", "label": "Notes", "fieldtype": "Long Text"}
+    {
+      "fieldname": "check_id",
+      "label": "Check ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project"
+    },
+    {
+      "fieldname": "area",
+      "label": "Area",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "check",
+      "label": "Check",
+      "fieldtype": "Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "oat_owner",
+      "label": "OAT Owner",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "acceptance_criteria",
+      "label": "Acceptance Criteria",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "latest_result",
+      "label": "Latest Result",
+      "fieldtype": "Select",
+      "options": "Pass\nFail\nBlocked\nNot Yet Run",
+      "read_only": 1,
+      "default": "Not Yet Run"
+    },
+    {
+      "fieldname": "latest_run_date",
+      "label": "Latest Run Date",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "run_count",
+      "label": "Run Count",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "default": 0
+    }
   ]
 }

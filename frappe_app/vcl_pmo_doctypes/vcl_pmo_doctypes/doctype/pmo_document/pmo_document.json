@@ -1,0 +1,81 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Document",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "document_id",
+      "label": "Document ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project"
+    },
+    {
+      "fieldname": "doc_type",
+      "label": "Document Type",
+      "fieldtype": "Select",
+      "options": "How-to\nWorkflow\nSOP\nSpec\nBrief\nDecision Log",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "content_md",
+      "label": "Markdown Content",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "version",
+      "label": "Version",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Draft\nLive\nArchived",
+      "default": "Draft"
+    },
+    {
+      "fieldname": "document_owner",
+      "label": "Owner",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "last_reviewed",
+      "label": "Last Reviewed",
+      "fieldtype": "Date"
+    }
+  ],
+  "autoname": "field:document_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

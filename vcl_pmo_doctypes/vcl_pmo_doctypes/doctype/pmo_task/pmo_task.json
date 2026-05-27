@@ -1,0 +1,100 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Task",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "task_id",
+      "label": "Task ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "milestone",
+      "label": "Milestone",
+      "fieldtype": "Link",
+      "options": "PMO Milestone"
+    },
+    {
+      "fieldname": "requirement",
+      "label": "Requirement",
+      "fieldtype": "Link",
+      "options": "PMO Requirement"
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "start_date",
+      "label": "Start Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "End Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Not Started\nIn Progress\nBlocked\nDone\nCancelled",
+      "default": "Not Started"
+    },
+    {
+      "fieldname": "assignee",
+      "label": "Assignee",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "percent_complete",
+      "label": "Percent Complete",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldname": "predecessors",
+      "label": "Predecessors",
+      "fieldtype": "Table",
+      "options": "PMO Task Dependency"
+    }
+  ],
+  "autoname": "field:task_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

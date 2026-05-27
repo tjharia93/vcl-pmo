@@ -1,0 +1,29 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Task Dependency",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "predecessor_task",
+      "label": "Predecessor Task",
+      "fieldtype": "Link",
+      "options": "PMO Task",
+      "reqd": 1
+    },
+    {
+      "fieldname": "dependency_type",
+      "label": "Dependency Type",
+      "fieldtype": "Select",
+      "options": "FS\nSS\nFF\nSF",
+      "default": "FS"
+    },
+    {
+      "fieldname": "lag_days",
+      "label": "Lag Days",
+      "fieldtype": "Int",
+      "default": 0
+    }
+  ]
+}

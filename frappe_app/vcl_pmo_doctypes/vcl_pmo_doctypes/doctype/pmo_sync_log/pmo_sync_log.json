@@ -3,7 +3,7 @@
   "name": "PMO Sync Log",
   "module": "VCL PMO Doctypes",
   "custom": 0,
-  "autoname": "hash",
+  "autoname": "format:PMO-SYNC-{YYYY}-{MM}-{####}",
   "permissions": [
     {
       "role": "System Manager",

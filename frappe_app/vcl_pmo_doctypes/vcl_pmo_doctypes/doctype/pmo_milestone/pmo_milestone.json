@@ -1,0 +1,87 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Milestone",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "milestone_id",
+      "label": "Milestone ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "milestone_name",
+      "label": "Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "target_date",
+      "label": "Target Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "actual_date",
+      "label": "Actual Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Not Started\nIn Progress\nAt Risk\nAchieved\nMissed",
+      "default": "Not Started"
+    },
+    {
+      "fieldname": "milestone_owner",
+      "label": "Owner",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "weight",
+      "label": "Weight",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldname": "dependencies",
+      "label": "Dependencies",
+      "fieldtype": "Table",
+      "options": "PMO Milestone Dependency"
+    }
+  ],
+  "autoname": "field:milestone_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

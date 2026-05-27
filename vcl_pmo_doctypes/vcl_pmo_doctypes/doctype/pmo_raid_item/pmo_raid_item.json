@@ -1,0 +1,110 @@
+{
+  "doctype": "DocType",
+  "name": "PMO RAID Item",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "raid_id",
+      "label": "RAID ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "type",
+      "label": "Type",
+      "fieldtype": "Select",
+      "options": "Risk\nAssumption\nIssue\nDependency",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "severity",
+      "label": "Severity",
+      "fieldtype": "Select",
+      "options": "Critical\nHigh\nMedium\nLow"
+    },
+    {
+      "fieldname": "probability",
+      "label": "Probability",
+      "fieldtype": "Select",
+      "options": "High\nMedium\nLow"
+    },
+    {
+      "fieldname": "impact",
+      "label": "Impact",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "mitigation",
+      "label": "Mitigation",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Open\nMitigating\nClosed\nAccepted",
+      "default": "Open"
+    },
+    {
+      "fieldname": "raid_owner",
+      "label": "Owner",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "raised_date",
+      "label": "Raised Date",
+      "fieldtype": "Date",
+      "default": "Today"
+    },
+    {
+      "fieldname": "due_date",
+      "label": "Due Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "resolved_date",
+      "label": "Resolved Date",
+      "fieldtype": "Date"
+    }
+  ],
+  "autoname": "field:raid_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}

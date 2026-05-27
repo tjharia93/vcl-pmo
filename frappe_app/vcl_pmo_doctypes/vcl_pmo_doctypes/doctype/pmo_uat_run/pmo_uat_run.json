@@ -1,0 +1,81 @@
+{
+  "doctype": "DocType",
+  "name": "PMO UAT Run",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "istable": 0,
+  "fields": [
+    {
+      "fieldname": "run_id",
+      "label": "Run ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "uat_case",
+      "label": "UAT Case",
+      "fieldtype": "Link",
+      "options": "PMO UAT Case",
+      "reqd": 1
+    },
+    {
+      "fieldname": "run_number",
+      "label": "Run Number",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "run_date",
+      "label": "Run Date",
+      "fieldtype": "Datetime",
+      "default": "Now"
+    },
+    {
+      "fieldname": "tester",
+      "label": "Tester",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "result",
+      "label": "Result",
+      "fieldtype": "Select",
+      "options": "Pass\nFail\nBlocked\nNot Run",
+      "default": "Not Run"
+    },
+    {
+      "fieldname": "evidence",
+      "label": "Evidence",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "environment",
+      "label": "Environment",
+      "fieldtype": "Data"
+    }
+  ],
+  "autoname": "field:run_id",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "submit": 1,
+      "cancel": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ]
+}
