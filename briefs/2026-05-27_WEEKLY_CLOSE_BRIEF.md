@@ -32,6 +32,14 @@ Already live and pulled forward: Daily Performance Audit v3.6 · EOD 17:00 PDF �
 
 **Net new build:** 6 working-paper xlsx templates + 1 weasyprint PDF generator + 1 Friday 17:00 cron line.
 
+## Decisions locked (2026-05-27)
+
+- **Sign-off:** Tanuj only · Jitu prepares + sends
+- **Sheila:** year-end only · gets the W01–W52 archive at audit kick-off
+- **Banks:** BOB USD · BOB KES · Co-op · ABC · M-Pesa (5 accounts)
+- **Issue log:** lives in both DCB (live) + WP-13 (Fri snapshot)
+- **Backfill:** YES · 21 packs (W01-W21 2026) reconstructed in Phase 1.5 in reverse order
+
 ## Tracked-as
 
 This will appear in the PMO at `VCL-FIN-CLOSE-001` once the PMO system is live. Until then, status lives in the brief on the share + this cross-reference.
