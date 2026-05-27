@@ -1,0 +1,17 @@
+{
+  "doctype": "Page",
+  "name": "pmo",
+  "page_name": "pmo",
+  "title": "VCL PMO",
+  "module": "VCL PMO Doctypes",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "PMO User"
+    }
+  ]
+}

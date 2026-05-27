@@ -1,0 +1,191 @@
+.vcl-pmo-page .layout-main-section {
+  background: #0A1130;
+  border: 0;
+  padding: 0;
+}
+.pmo-shell {
+  min-height: calc(100vh - 120px);
+  background: #0A1130;
+  color: #F4F5FA;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.pmo-ticker {
+  display: flex;
+  gap: 18px;
+  overflow: auto;
+  padding: 10px 16px;
+  background: #10183F;
+  border-bottom: 1px solid #222B5C;
+  color: #A8B0D6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.pmo-ticker b,
+.pmo-ticker .live {
+  color: #7BB48A;
+}
+.pmo-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 16px;
+  border-bottom: 1px solid #222B5C;
+}
+.pmo-tabs button,
+.pmo-small {
+  border: 1px solid #2D3878;
+  border-radius: 6px;
+  background: #10183F;
+  color: #F4F5FA;
+  padding: 7px 12px;
+  font-weight: 600;
+}
+.pmo-tabs button.active,
+.pmo-tabs button:hover,
+.pmo-small:hover {
+  border-color: #7BB48A;
+  color: #7BB48A;
+}
+.pmo-body {
+  padding: 22px;
+}
+.pmo-head h2 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  color: #F4F5FA;
+}
+.pmo-head p,
+.pmo-muted,
+.pmo-row small,
+.pmo-card p {
+  color: #A8B0D6;
+}
+.pmo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pmo-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  background: #141B43;
+  border: 1px solid #222B5C;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.pmo-row:hover,
+.pmo-card:hover {
+  border-color: #7BB48A;
+}
+.pmo-dot {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #7BB48A;
+  color: #0A1130;
+  font-weight: 800;
+}
+.pmo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.pmo-card {
+  background: #141B43;
+  border: 1px solid #222B5C;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+}
+.pmo-card-title {
+  font-weight: 800;
+  font-size: 15px;
+}
+.pmo-card b {
+  display: block;
+  color: #F4F5FA;
+  font-size: 30px;
+  margin-top: 4px;
+}
+.pmo-progress {
+  height: 6px;
+  background: #171F4D;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+.pmo-progress i {
+  display: block;
+  height: 100%;
+  background: #7BB48A;
+}
+.pmo-chip {
+  display: inline-flex;
+  border: 1px solid #2D3878;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.pmo-chip.green { color: #5BC57F; background: rgba(91,197,127,.14); }
+.pmo-chip.amber { color: #F2A33B; background: rgba(242,163,59,.14); }
+.pmo-chip.red { color: #E26060; background: rgba(226,96,96,.14); }
+.pmo-chip.blue { color: #5C6DBE; background: rgba(92,109,190,.14); }
+.pmo-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #141B43;
+  border: 1px solid #222B5C;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.pmo-table th,
+.pmo-table td {
+  padding: 10px 12px;
+  border-top: 1px solid #222B5C;
+}
+.pmo-table th {
+  background: #10183F;
+  color: #A8B0D6;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.pmo-table td {
+  color: #F4F5FA;
+}
+.pmo-table tbody tr:hover td {
+  background: #10183F;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.pmo-actions {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+.pmo-brief {
+  max-width: 760px;
+  cursor: default;
+}
+@media (max-width: 760px) {
+  .pmo-tabs {
+    overflow: auto;
+  }
+  .pmo-body {
+    padding: 14px;
+  }
+  .pmo-row {
+    grid-template-columns: 32px 1fr;
+  }
+}
