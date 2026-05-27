@@ -310,15 +310,17 @@ ERPNext is the data home. PMO data lives in three custom doctypes inside a dedic
 
 ### 7.1 Connection
 
-REST with API key + secret, identical pattern to `~/projects/apps/intranet/_shell/ppc/services/erpnext.py`:
+REST with API key + secret, identical pattern to `~/projects/apps/intranet/_shell/ppc/services/erpnext.py`.
+
+**Live env (already on this host):** `/opt/vcl/config/.env` (perm 600) holds:
 
 ```
-FRAPPE_URL=https://vcl.frappe.cloud
-FRAPPE_API_KEY=…
-FRAPPE_API_SECRET=…
+ERPNEXT_URL=https://vcl.frappe.cloud
+ERPNEXT_API_KEY=…
+ERPNEXT_API_SECRET=…
 ```
 
-Read from `/opt/vcl/config/.env` or `~/projects/apps/intranet/.env` (whichever the intranet shell already loads). **Do not duplicate** credentials.
+The reference helper accepts either `ERPNEXT_*` **or** `FRAPPE_*` prefix (`os.environ.get("ERPNEXT_URL") or os.environ.get("FRAPPE_URL")`). Use the same fallback pattern. **Do not duplicate** credentials elsewhere.
 
 ### 7.2 Custom Frappe app — `vcl_pmo_doctypes`
 
