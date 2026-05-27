@@ -2,6 +2,9 @@
 
 The VCL Programme Management Office — code, context, and design references in one repo.
 
+<!-- bench-bump 2026-05-27 -->
+
+
 ## Repo structure
 
 | Path | Contents |
