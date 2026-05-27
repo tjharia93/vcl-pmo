@@ -1,0 +1,28 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Requirement",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "is_submittable": 1,
+  "autoname": "field:requirement_id",
+  "permissions": [
+    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "delete": 1},
+    {"role": "PMO User", "read": 1, "write": 1, "create": 1}
+  ],
+  "fields": [
+    {"fieldname": "requirement_id", "label": "Requirement ID", "fieldtype": "Data", "reqd": 1, "unique": 1},
+    {"fieldname": "project", "label": "Project", "fieldtype": "Link", "options": "PMO Project", "reqd": 1},
+    {"fieldname": "area", "label": "Area", "fieldtype": "Data"},
+    {"fieldname": "requirement", "label": "Requirement", "fieldtype": "Text", "reqd": 1},
+    {"fieldname": "priority", "label": "Priority", "fieldtype": "Select", "options": "Must Have\nShould\nNice"},
+    {"fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "Not Started\nIn Progress\nIn Review\nBlocked\nDone"},
+    {"fieldname": "owner", "label": "Owner", "fieldtype": "Data"},
+    {"fieldname": "uat_result", "label": "UAT Result", "fieldtype": "Select", "options": "Not Tested\nPass\nFail"},
+    {"fieldname": "uat_tester", "label": "UAT Tester", "fieldtype": "Link", "options": "User"},
+    {"fieldname": "uat_date", "label": "UAT Date", "fieldtype": "Date"},
+    {"fieldname": "needs_action", "label": "Needs Action", "fieldtype": "Check"},
+    {"fieldname": "note", "label": "Note", "fieldtype": "Long Text"},
+    {"fieldname": "md_path", "label": "Markdown Path", "fieldtype": "Data"},
+    {"fieldname": "erpnext_links", "label": "ERPNext Links", "fieldtype": "Table", "options": "PMO Requirement Link"}
+  ]
+}

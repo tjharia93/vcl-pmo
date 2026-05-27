@@ -1,0 +1,11 @@
+# {{ req_id }}
+
+Project: `{{ project_id }}`
+Status: `{{ status }}`
+Agent: `{{ agent }}`
+
+{{ notes }}
+
+{% for file in files_changed -%}
+- {{ file }}
+{% endfor %}
