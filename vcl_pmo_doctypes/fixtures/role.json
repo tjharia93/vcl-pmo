@@ -1,0 +1,9 @@
+[
+  {
+    "doctype": "Role",
+    "role_name": "PMO User",
+    "desk_access": 1,
+    "disabled": 0,
+    "is_custom": 1
+  }
+]

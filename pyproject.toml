@@ -20,7 +20,7 @@ Homepage = "https://github.com/tjharia93/vcl-pmo"
 app_name = "vcl_pmo_doctypes"
 
 [tool.setuptools.packages.find]
-where = ["frappe_app/vcl_pmo_doctypes"]
+where = ["."]
 include = ["vcl_pmo_doctypes*"]
 
 [tool.setuptools.package-data]
