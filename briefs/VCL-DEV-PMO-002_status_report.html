@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>VCL PMO System — Status Report</title>
+<style>
+  :root {
+    --navy: #0D1A2E;
+    --amber: #F59E0B;
+    --ink: #1A1A1A;
+    --slate: #6C7A89;
+    --rule: #D5DBE3;
+    --paper: #FFFFFF;
+    --soft: #F4F6F9;
+    --green: #2E7D32;
+    --red: #B33A3A;
+  }
+  @page { size: A4 portrait; margin: 18mm 16mm 22mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: 'Helvetica', 'Arial', 'Segoe UI', sans-serif; color: var(--ink); background: var(--paper); }
+  body { font-size: 13.5pt; line-height: 1.5; }
+  .page { page-break-after: always; padding: 0; }
+  .page:last-of-type { page-break-after: auto; }
+  .stripe { height: 8px; background: var(--navy); margin-bottom: 18px; }
+  .accent { height: 4px; background: var(--amber); margin-bottom: 22px; }
+  h1 { font-size: 30pt; color: var(--navy); line-height: 1.1; margin: 0 0 8px 0; }
+  h2 { font-size: 18pt; color: var(--navy); margin: 26px 0 10px 0; padding-bottom: 6px; border-bottom: 1.5px solid var(--amber); }
+  h3 { font-size: 13.5pt; color: var(--navy); margin: 18px 0 6px 0; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0 12px 22px; padding: 0; }
+  li { margin: 4px 0; }
+  .meta { color: var(--slate); font-size: 11pt; letter-spacing: 0.3px; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 10pt; font-weight: 600; }
+  .pill-done    { background: var(--green); color: white; }
+  .pill-progress{ background: var(--amber); color: var(--navy); }
+  .pill-todo    { background: var(--rule);  color: var(--navy); }
+  .pill-block   { background: var(--red);   color: white; }
+  .summary-box {
+    border-left: 4px solid var(--amber);
+    background: var(--soft);
+    padding: 14px 16px;
+    margin: 12px 0 18px 0;
+    border-radius: 4px;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px 0; font-size: 12pt; }
+  th { background: var(--navy); color: white; text-align: left; padding: 8px 10px; font-size: 11pt; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td.who { color: var(--slate); font-style: italic; width: 110px; }
+  td.what { color: var(--ink); }
+  td.when { width: 90px; color: var(--slate); }
+  .footer { position: fixed; bottom: 8mm; left: 16mm; right: 16mm; border-top: 1px solid var(--rule); padding-top: 4mm; font-size: 9pt; color: var(--slate); display: flex; justify-content: space-between; }
+  .cover {
+    height: 245mm; display: flex; flex-direction: column; justify-content: space-between;
+    padding: 28mm 0 18mm 0;
+  }
+  .cover .brand { font-size: 11pt; letter-spacing: 4px; color: var(--navy); font-weight: 700; }
+  .cover h1 { font-size: 44pt; line-height: 1.05; margin-top: 18px; }
+  .cover .lede { font-size: 16pt; color: var(--slate); margin-top: 12px; line-height: 1.4; max-width: 540px; }
+  .cover .fact-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin-top: 36px;
+    padding: 18px 22px; background: var(--soft); border-left: 4px solid var(--amber); border-radius: 4px;
+  }
+  .cover .fact-grid b { display: block; font-size: 10pt; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+  .cover .fact-grid span { font-size: 13pt; color: var(--ink); }
+  .cover .signoff { color: var(--slate); font-size: 11pt; }
+
+  .traffic { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
+  .traffic .card { padding: 14px 14px; border-radius: 6px; background: var(--soft); border-top: 4px solid var(--rule); }
+  .traffic .card.green { border-top-color: var(--green); }
+  .traffic .card.amber { border-top-color: var(--amber); }
+  .traffic .card.red   { border-top-color: var(--red); }
+  .traffic .card b { display: block; font-size: 10pt; letter-spacing: 0.5px; color: var(--slate); }
+  .traffic .card .n { font-size: 32pt; font-weight: 700; color: var(--navy); line-height: 1.0; margin-top: 4px; }
+  .traffic .card .lbl { font-size: 10pt; color: var(--slate); margin-top: 2px; }
+
+  svg.diagram { display: block; margin: 14px auto; max-width: 100%; height: auto; }
+  .caption { font-size: 10pt; color: var(--slate); text-align: center; margin-top: -4px; }
+
+  .qa { background: var(--soft); border-left: 4px solid var(--navy); padding: 12px 14px; border-radius: 4px; margin: 10px 0; }
+  .qa b { color: var(--navy); }
+
+  .signature {
+    margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--rule);
+    font-size: 11pt; color: var(--slate);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+  }
+  .signature .slot { border-bottom: 1px solid var(--ink); padding-bottom: 28px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ================== COVER ================== -->
+<section class="page">
+  <div class="stripe"></div>
+  <div class="accent"></div>
+  <div class="cover">
+    <div>
+      <div class="brand">VIMIT CONVERTERS · PMO</div>
+      <h1>VCL PMO System</h1>
+      <div class="lede">A single, plain-English status pack for the project we are using to build the system that runs all our other projects.</div>
+    </div>
+
+    <div class="fact-grid">
+      <div><b>Project ID</b><span>VCL-DEV-PMO-002</span></div>
+      <div><b>Sponsor</b><span>Tanuj Haria</span></div>
+      <div><b>Phase</b><span>Phase 2 — Build</span></div>
+      <div><b>Started</b><span>27 May 2026</span></div>
+      <div><b>Target finish</b><span>7 June 2026</span></div>
+      <div><b>This report</b><span>28 May 2026</span></div>
+    </div>
+
+    <div class="signoff">Prepared by Claude · for review and annotation on reMarkable / Boox Air 5.</div>
+  </div>
+</section>
+
+<!-- ================== STATUS TODAY ================== -->
+<section class="page">
+  <div class="stripe"></div>
+  <h1 style="margin-top:0;">Where we are today</h1>
+  <p class="meta">Status as at 21:30 EAT, 28 May 2026.</p>
+
+  <div class="traffic">
+    <div class="card green"><b>Done</b><div class="n">2</div><div class="lbl">work blocks shipped</div></div>
+    <div class="card amber"><b>In flight</b><div class="n">1</div><div class="lbl">waiting on one setup step</div></div>
+    <div class="card amber"><b>Waiting</b><div class="n">1</div><div class="lbl">design write-up pending</div></div>
+    <div class="card green"><b>Health</b><div class="n">On track</div><div class="lbl">target 7 Jun stands</div></div>
+  </div>
+
+  <div class="summary-box">
+    <b>One sentence:</b> The PMO is being built inside ERPNext as the new home for all VCL development work — so plans, tasks, agents, testing and approvals all live in one place. As of today, four of the four planned work blocks are either shipped or coded; the only remaining step before the system is end-to-end operational is one Slack token install and one design write-up.
+  </div>
+
+  <h2>What we just finished</h2>
+  <table>
+    <thead><tr><th>What</th><th>Why it matters</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Back button works everywhere</b></td>
+        <td>Pressing browser Back from any sub-page now returns to the right tab instead of landing on a "page not available" error. Reload (F5) and pasted links also work.</td>
+        <td><span class="pill pill-done">Done</span></td>
+      </tr>
+      <tr>
+        <td><b>Tests are grouped by what they test</b></td>
+        <td>Instead of one long flat list of UAT/OAT items, each shift's tests sit under a clear header showing pass/fail/blocked counts. Easier to walk through, easier to sign off.</td>
+        <td><span class="pill pill-done">Done</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What is built but waiting on one setup</h2>
+  <table>
+    <thead><tr><th>What</th><th>Why it matters</th><th>What it needs</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Plans go to Slack as PDFs</b></td>
+        <td>One click on any plan renders a clean, A4, VCL-branded PDF and drops it in the #ai-pmo-plans Slack channel. Sized for reading and annotating on reMarkable or Boox Air 5.</td>
+        <td>Install a Slack bot token in the site settings, invite the bot to the channel. About 10 minutes of admin.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What is still on the drawing board</h2>
+  <table>
+    <thead><tr><th>What</th><th>Why it matters</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Auto-review of new plans by agents</b></td>
+        <td>Today every new plan needs Tanuj to manually choose Claude / Codex / human for each item. The design will let an agent draft the proposed allocation overnight and send Tanuj a single Approve button.</td>
+        <td>Codex — design only, not code, by 30 May</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer"><span>VCL PMO · VCL-DEV-PMO-002</span><span>Status report · 28 May 2026 · page 2</span></div>
+</section>
+
+<!-- ================== HOW IT WORKS ================== -->
+<section class="page">
+  <div class="stripe"></div>
+  <h1 style="margin-top:0;">How it works</h1>
+  <p>Every piece of work flows through the same loop. Tanuj writes a plan, the plan gets broken into shifts, each shift is allocated to either Claude, Codex or a human, the agent does the work and reports back, and the test records get filled in as part of the same cycle.</p>
+
+  <svg class="diagram" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent loop swimlane">
+    <defs>
+      <marker id="arr" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+        <path d="M0,0 L12,6 L0,12 z" fill="#0D1A2E"/>
+      </marker>
+    </defs>
+    <!-- swim lanes -->
+    <rect x="0" y="0"   width="720" height="76"  fill="#F4F6F9" stroke="#D5DBE3"/>
+    <rect x="0" y="76"  width="720" height="76"  fill="#FFFFFF" stroke="#D5DBE3"/>
+    <rect x="0" y="152" width="720" height="76"  fill="#F4F6F9" stroke="#D5DBE3"/>
+    <rect x="0" y="228" width="720" height="76"  fill="#FFFFFF" stroke="#D5DBE3"/>
+    <rect x="0" y="304" width="720" height="76"  fill="#F4F6F9" stroke="#D5DBE3"/>
+    <!-- lane labels -->
+    <text x="10" y="44"  font-size="13" fill="#0D1A2E" font-weight="700">Tanuj</text>
+    <text x="10" y="120" font-size="13" fill="#0D1A2E" font-weight="700">PMO system</text>
+    <text x="10" y="196" font-size="13" fill="#0D1A2E" font-weight="700">Agent (Claude / Codex)</text>
+    <text x="10" y="272" font-size="13" fill="#0D1A2E" font-weight="700">UAT / OAT</text>
+    <text x="10" y="348" font-size="13" fill="#0D1A2E" font-weight="700">Slack / Excel</text>
+    <!-- nodes -->
+    <g font-family="Helvetica, Arial" font-size="11" text-anchor="middle">
+      <!-- 1 plan -->
+      <rect x="120" y="14" width="120" height="48" fill="#0D1A2E" rx="6"/>
+      <text x="180" y="38" fill="white" font-weight="700">1. Write plan</text>
+      <text x="180" y="54" fill="white">in /app/pmo</text>
+      <!-- 2 allocate -->
+      <rect x="280" y="90" width="120" height="48" fill="#F59E0B" rx="6"/>
+      <text x="340" y="114" fill="#0D1A2E" font-weight="700">2. Allocate items</text>
+      <text x="340" y="130" fill="#0D1A2E">to claude / codex / human</text>
+      <!-- 3 dispatch -->
+      <rect x="440" y="90" width="120" height="48" fill="#0D1A2E" rx="6"/>
+      <text x="500" y="114" fill="white" font-weight="700">3. Dispatch shift</text>
+      <text x="500" y="130" fill="white">via n8n webhook</text>
+      <!-- 4 agent work -->
+      <rect x="440" y="166" width="120" height="48" fill="#0D1A2E" rx="6"/>
+      <text x="500" y="190" fill="white" font-weight="700">4. Agent works</text>
+      <text x="500" y="206" fill="white">commits + writes notes</text>
+      <!-- 5 callback -->
+      <rect x="280" y="166" width="120" height="48" fill="#F59E0B" rx="6"/>
+      <text x="340" y="190" fill="#0D1A2E" font-weight="700">5. Complete shift</text>
+      <text x="340" y="206" fill="#0D1A2E">writes UAT/OAT runs</text>
+      <!-- 6 UAT walk -->
+      <rect x="280" y="242" width="120" height="48" fill="#0D1A2E" rx="6"/>
+      <text x="340" y="266" fill="white" font-weight="700">6. UAT walk</text>
+      <text x="340" y="282" fill="white">Tanuj signs off</text>
+      <!-- 7 slack mirror -->
+      <rect x="440" y="318" width="120" height="48" fill="#F59E0B" rx="6"/>
+      <text x="500" y="342" fill="#0D1A2E" font-weight="700">7. Slack mirror</text>
+      <text x="500" y="358" fill="#0D1A2E">plan PDF posted</text>
+      <!-- excel mirror -->
+      <rect x="120" y="318" width="120" height="48" fill="#0D1A2E" rx="6"/>
+      <text x="180" y="342" fill="white" font-weight="700">Excel mirror</text>
+      <text x="180" y="358" fill="white">via n8n</text>
+    </g>
+    <!-- arrows -->
+    <g stroke="#0D1A2E" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+      <line x1="240" y1="38" x2="340" y2="86"/>
+      <line x1="400" y1="114" x2="438" y2="114"/>
+      <line x1="500" y1="138" x2="500" y2="164"/>
+      <line x1="440" y1="190" x2="402" y2="190"/>
+      <line x1="340" y1="214" x2="340" y2="240"/>
+      <line x1="400" y1="266" x2="500" y2="316"/>
+      <line x1="180" y1="62"  x2="180" y2="316"/>
+    </g>
+  </svg>
+  <p class="caption">Figure 1. One full loop: from a plan in your head to tests signed off and notes mirrored to Slack and Excel.</p>
+
+  <h2>Where each piece lives</h2>
+  <p>We deliberately do <i>not</i> try to put everything in one tool. The principle is two anchors: ERPNext is the operational source of truth for project work, and the Slack channel + Excel mirror exist for reading and review surfaces that already work for the team.</p>
+
+  <svg class="diagram" viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two anchor model">
+    <defs>
+      <marker id="arr2" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+        <path d="M0,0 L12,6 L0,12 z" fill="#6C7A89"/>
+      </marker>
+    </defs>
+    <g font-family="Helvetica, Arial" font-size="12" text-anchor="middle">
+      <!-- ERP anchor -->
+      <rect x="60"  y="60" width="220" height="120" rx="10" fill="#0D1A2E"/>
+      <text x="170" y="92" fill="white" font-weight="700" font-size="14">ERPNext (Frappe Cloud)</text>
+      <text x="170" y="118" fill="white">PMO doctypes · /app/pmo</text>
+      <text x="170" y="138" fill="white">Plans · Shifts · Tasks</text>
+      <text x="170" y="158" fill="white">UAT · OAT · RAID · Notes</text>
+      <text x="170" y="200" fill="#0D1A2E" font-weight="700">SOURCE OF TRUTH</text>
+
+      <!-- Slack anchor -->
+      <rect x="440" y="20" width="220" height="80" rx="10" fill="#F59E0B"/>
+      <text x="550" y="50" fill="#0D1A2E" font-weight="700" font-size="14">Slack #ai-pmo-plans</text>
+      <text x="550" y="70" fill="#0D1A2E">Plan PDFs · approvals</text>
+      <text x="550" y="86" fill="#0D1A2E">read on remarkable / Boox</text>
+
+      <!-- Excel anchor -->
+      <rect x="440" y="140" width="220" height="80" rx="10" fill="#FFFFFF" stroke="#0D1A2E" stroke-width="2"/>
+      <text x="550" y="170" fill="#0D1A2E" font-weight="700" font-size="14">Excel mirror</text>
+      <text x="550" y="190" fill="#0D1A2E">monthly slice on the share</text>
+      <text x="550" y="206" fill="#0D1A2E">written by n8n, read-only</text>
+    </g>
+    <!-- arrows -->
+    <g stroke="#6C7A89" stroke-width="1.5" fill="none" marker-end="url(#arr2)">
+      <line x1="280" y1="100" x2="438" y2="60"/>
+      <line x1="280" y1="140" x2="438" y2="180"/>
+    </g>
+  </svg>
+  <p class="caption">Figure 2. One source of truth, two downstream review surfaces. No reverse writes from Slack or Excel back into ERPNext.</p>
+
+  <div class="footer"><span>VCL PMO · VCL-DEV-PMO-002</span><span>Status report · 28 May 2026 · page 3</span></div>
+</section>
+
+<!-- ================== WHAT'S NEXT ================== -->
+<section class="page">
+  <div class="stripe"></div>
+  <h1 style="margin-top:0;">What comes next</h1>
+
+  <h2>Before this Friday (29–30 May)</h2>
+  <table>
+    <thead><tr><th class="who">Owner</th><th class="what">Action</th><th class="when">By</th></tr></thead>
+    <tbody>
+      <tr><td class="who">Tanuj</td><td class="what">Install a Slack bot in the workspace, drop its token into the PMO site settings, invite it to <b>#ai-pmo-plans</b>.</td><td class="when">29 May</td></tr>
+      <tr><td class="who">Tanuj</td><td class="what">Walk the back-button fix on three real flows (Plans → Plan, Shifts → Shift, UAT case detail). Sign off SHIFT-0001.</td><td class="when">29 May</td></tr>
+      <tr><td class="who">Tanuj</td><td class="what">Once the bot is in: click "Send PDF to Slack" on one plan. Confirm it lands and reads cleanly on reMarkable. Sign off SHIFT-0003.</td><td class="when">29 May</td></tr>
+      <tr><td class="who">Codex</td><td class="what">Write the spec for "auto-review of new plans" — six points, no code. Lands as a markdown doc in the repo.</td><td class="when">30 May</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Following week (2–7 June)</h2>
+  <table>
+    <thead><tr><th class="who">Owner</th><th class="what">Action</th><th class="when">By</th></tr></thead>
+    <tbody>
+      <tr><td class="who">Tanuj</td><td class="what">Review the auto-review spec, mark it Pass, hand off to Claude or Codex to build.</td><td class="when">2 Jun</td></tr>
+      <tr><td class="who">Tanuj</td><td class="what">Close the Phase 2 Foundation milestone (MS-PMO-001). System officially the master for development work.</td><td class="when">3 Jun</td></tr>
+      <tr><td class="who">Claude or Codex</td><td class="what">Build the scheduled plan-review job (nightly sweep, capacity-aware routing, single approve action).</td><td class="when">5 Jun</td></tr>
+      <tr><td class="who">Tanuj</td><td class="what">UAT the scheduled job end-to-end. Mark project Done.</td><td class="when">7 Jun</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Open questions for Tanuj</h2>
+  <div class="qa"><b>Q1.</b> Slack bot — create a new one called <i>VCL PMO Bot</i>, or reuse an existing workspace bot? (Recommend new, so scopes stay minimal.)</div>
+  <div class="qa"><b>Q2.</b> Auto-review trigger — every 6 hours, nightly at 23:00, or hourly when an unallocated plan appears? (Recommend nightly 23:00 to keep noise low.)</div>
+  <div class="qa"><b>Q3.</b> Capacity probe for Codex — manual flag in site settings, or external monitor file we drop on the share? (Recommend manual flag this round; revisit once we hit a real Codex quota event.)</div>
+  <div class="qa"><b>Q4.</b> Where do approvals live — Slack with a button, Telegram with a reply, or just the Plans tab in /app/pmo? (Recommend Slack message with a permalink back to /app/pmo for now.)</div>
+
+  <div class="signature">
+    <div>
+      <div class="slot">&nbsp;</div>
+      <div>Tanuj Haria — Sponsor</div>
+    </div>
+    <div>
+      <div class="slot">&nbsp;</div>
+      <div>Date</div>
+    </div>
+  </div>
+
+  <div class="footer"><span>VCL PMO · VCL-DEV-PMO-002</span><span>Status report · 28 May 2026 · page 4</span></div>
+</section>
+
+</body>
+</html>
