@@ -277,6 +277,7 @@ class VCLPMOPage {
     if (name === "complete-shift") return this.modalCompleteShift(el.dataset.shift);
     if (name === "block-shift") return this.modalBlockShift(el.dataset.shift);
     if (name === "dispatch-shift") return this.dispatchShift(el.dataset.shift);
+    if (name === "send-plan-slack") return this.sendPlanToSlack(el.dataset.plan);
     if (name === "open-desk") return window.open(`/app/${encodeURIComponent(el.dataset.doctype.toLowerCase().replaceAll(" ", "-"))}/${encodeURIComponent(el.dataset.name)}`, "_blank");
     if (name === "close-overlay") return this.closeOverlay();
   }
@@ -559,7 +560,7 @@ class VCLPMOPage {
     const items = detail.items;
     this.$root.find("[data-tabs]").html("");
     const checkboxes = items.map((it, i) => `<tr><td><input type="checkbox" class="pmo-plan-check" data-idx="${i}" ${it.promoted_to_doctype ? "disabled" : ""}></td><td class="pmo-mono">${this.esc(it.item_type)}</td><td>${this.esc(it.title)}</td><td>${this.esc((it.description || "").slice(0, 80))}</td><td>${it.needs_uat ? "✓" : ""}</td><td>${it.needs_oat ? "✓" : ""}</td><td>${this.esc(it.assignee_hint || "")}</td><td>${it.promoted_to_doctype ? `${this.esc(it.promoted_to_doctype)}<br><span class="pmo-mono">${this.esc(it.promoted_to_name)}</span>` : "<span class='pmo-muted'>not allocated</span>"}</td></tr>`).join("");
-    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Plans", plan.plan_id])}${this.head(plan.title || plan.plan_id, `${plan.status} · ${items.length} proposed item${items.length === 1 ? "" : "s"}`)}<div class="pmo-card pmo-markdown">${this.renderMD(plan.description || "No description.")}</div><div class="pmo-actions"><button class="pmo-btn primary" data-action="add-plan-item" data-plan="${plan.plan_id}">Add Item</button><button class="pmo-btn" data-action="allocate-claude" data-plan="${plan.plan_id}">Allocate selected to Claude</button><button class="pmo-btn" data-action="allocate-codex" data-plan="${plan.plan_id}">Allocate selected to Codex</button><button class="pmo-btn" data-action="allocate-human" data-plan="${plan.plan_id}">Allocate selected to Human</button></div><table class="pmo-table"><thead><tr><th><input type="checkbox" id="pmo-plan-check-all"></th><th>Type</th><th>Title</th><th>Description</th><th>UAT</th><th>OAT</th><th>Hint</th><th>Promoted</th></tr></thead><tbody>${checkboxes || "<tr><td colspan='8' class='pmo-muted'>No items. Click Add Item to start.</td></tr>"}</tbody></table>`);
+    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Plans", plan.plan_id])}${this.head(plan.title || plan.plan_id, `${plan.status} · ${items.length} proposed item${items.length === 1 ? "" : "s"}`)}<div class="pmo-card pmo-markdown">${this.renderMD(plan.description || "No description.")}</div><div class="pmo-actions"><button class="pmo-btn primary" data-action="add-plan-item" data-plan="${plan.plan_id}">Add Item</button><button class="pmo-btn" data-action="send-plan-slack" data-plan="${plan.plan_id}" title="Render plan as VCL-branded PDF and post to #ai-pmo-plans">Send PDF to Slack</button><button class="pmo-btn" data-action="allocate-claude" data-plan="${plan.plan_id}">Allocate selected to Claude</button><button class="pmo-btn" data-action="allocate-codex" data-plan="${plan.plan_id}">Allocate selected to Codex</button><button class="pmo-btn" data-action="allocate-human" data-plan="${plan.plan_id}">Allocate selected to Human</button></div><table class="pmo-table"><thead><tr><th><input type="checkbox" id="pmo-plan-check-all"></th><th>Type</th><th>Title</th><th>Description</th><th>UAT</th><th>OAT</th><th>Hint</th><th>Promoted</th></tr></thead><tbody>${checkboxes || "<tr><td colspan='8' class='pmo-muted'>No items. Click Add Item to start.</td></tr>"}</tbody></table>`);
     this.$body.find("#pmo-plan-check-all").on("change", (e) => {
       const checked = e.currentTarget.checked;
       this.$body.find(".pmo-plan-check:not(:disabled)").prop("checked", checked);
@@ -653,5 +654,17 @@ class VCLPMOPage {
     else frappe.show_alert({ message: `Dispatch failed: ${(result && result.error) || "unknown"}`, indicator: "red" });
     await this.loadProject(this.state.project);
     this.render();
+  }
+
+  async sendPlanToSlack(planId) {
+    frappe.show_alert({ message: `Rendering ${planId} as PDF and uploading to Slack…`, indicator: "blue" });
+    const result = await this.call("vcl_pmo_doctypes.api.send_plan_to_slack", { plan_id: planId });
+    if (result && result.ok) {
+      const link = result.permalink ? ` <a href="${result.permalink}" target="_blank">Open in Slack</a>` : "";
+      frappe.show_alert({ message: `Posted ${planId} to Slack ✓${link}`, indicator: "green" }, 12);
+    } else {
+      const err = (result && (result.error || result.step)) || "unknown error";
+      frappe.show_alert({ message: `Slack post failed: ${err}. Check pmo_slack_bot_token in site_config.json.`, indicator: "red" }, 12);
+    }
   }
 }
