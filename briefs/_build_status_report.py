@@ -404,7 +404,7 @@ ARCH_SVG = r"""
 </svg>"""
 
 BUTTON_FLOW_SVG = r"""
-<svg class="diagram" viewBox="0 0 720 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Button flow in /app/pmo">
+<svg class="diagram" viewBox="0 0 720 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Button flow in /app/pmo — plan-level vs shift-level">
   <defs>
     <style>
       .btn-pri  { fill: #2B3990; }
@@ -414,50 +414,129 @@ BUTTON_FLOW_SVG = r"""
       .btn-txt   { fill: white; font: 600 11px Manrope, sans-serif; }
       .btn-txt-d { fill: #1D2766; font: 600 11px Manrope, sans-serif; }
       .num       { fill: #2B3990; font: 700 12px 'JetBrains Mono', monospace; }
-      .lbl       { fill: #1D2766; font: 600 11.5px Manrope, sans-serif; }
-      .sub       { fill: #8A909E; font: 10.5px Manrope, sans-serif; }
     </style>
   </defs>
 
-  <text x="60"  y="34" class="num">01</text>
-  <text x="90"  y="34" class="lbl">Open /app/pmo and pick the project</text>
-  <rect x="60"  y="46" width="180" height="30" rx="5" class="btn-out"/>
-  <text x="150" y="66" class="btn-txt-d" text-anchor="middle">VCL PMO System</text>
-  <text x="60"  y="92" class="sub">Lands on the project page with all the tabs across the top.</text>
+  <!-- LANE 1: PLAN LEVEL -->
+  <line x1="40" y1="44" x2="700" y2="44" stroke="#5A9367" stroke-width="1.5"/>
+  <text x="40" y="36" fill="#5A9367" font-family="Manrope, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2.5">PLAN-LEVEL — ONE PLAN, FOUR BUTTONS (INDEPENDENT)</text>
 
-  <text x="60"  y="120" class="num">02</text>
-  <text x="90"  y="120" class="lbl">Plans tab — start a new plan</text>
-  <rect x="60"  y="132" width="130" height="30" rx="5" class="btn-pri"/>
-  <text x="125" y="152" class="btn-txt" text-anchor="middle">+ New Plan</text>
-  <text x="60"  y="178" class="sub">Modal opens. You type a title + description, click Save.</text>
+  <text x="60"  y="74" fill="#2B3990" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">01</text>
+  <text x="90"  y="74" fill="#1D2766" font-family="Manrope, sans-serif" font-weight="600" font-size="11.5">Open /app/pmo and pick the project</text>
+  <rect x="60"  y="86" width="180" height="30" rx="5" class="btn-out"/>
+  <text x="150" y="106" class="btn-txt-d" text-anchor="middle">VCL PMO System</text>
+  <text x="60"  y="132" fill="#8A909E" font-family="Manrope, sans-serif" font-size="10.5">Lands on the project page with all the tabs across the top.</text>
 
-  <text x="60"  y="206" class="num">03</text>
-  <text x="90"  y="206" class="lbl">Add items to the plan</text>
-  <rect x="60"  y="218" width="130" height="30" rx="5" class="btn-pri"/>
-  <text x="125" y="238" class="btn-txt" text-anchor="middle">+ Add Item</text>
-  <text x="210" y="238" class="sub">Each item picks a type (Shift, Task, Milestone, RAID...).</text>
+  <text x="60"  y="160" fill="#2B3990" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">02</text>
+  <text x="90"  y="160" fill="#1D2766" font-family="Manrope, sans-serif" font-weight="600" font-size="11.5">Plans tab — start a new plan</text>
+  <rect x="60"  y="172" width="130" height="30" rx="5" class="btn-pri"/>
+  <text x="125" y="192" class="btn-txt" text-anchor="middle">+ New Plan</text>
+  <text x="60"  y="218" fill="#8A909E" font-family="Manrope, sans-serif" font-size="10.5">Modal opens. You type a title + description, click Save.</text>
 
-  <text x="60"  y="270" class="num">04</text>
-  <text x="90"  y="270" class="lbl">Push the plan to Slack as a branded PDF</text>
-  <rect x="60"  y="282" width="180" height="30" rx="5" class="btn-amb"/>
-  <text x="150" y="302" class="btn-txt" text-anchor="middle">Send PDF to Slack</text>
-  <text x="260" y="302" class="sub">Lands in #ai-pmo-plans, reads cleanly on reMarkable.</text>
+  <text x="60"  y="246" fill="#2B3990" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">03</text>
+  <text x="90"  y="246" fill="#1D2766" font-family="Manrope, sans-serif" font-weight="600" font-size="11.5">Add items + send the brief to Slack (independent of allocation)</text>
+  <rect x="60"  y="258" width="130" height="30" rx="5" class="btn-pri"/>
+  <text x="125" y="278" class="btn-txt" text-anchor="middle">+ Add Item</text>
+  <rect x="210" y="258" width="180" height="30" rx="5" class="btn-amb"/>
+  <text x="300" y="278" class="btn-txt" text-anchor="middle">Send PDF to Slack</text>
+  <text x="60"  y="304" fill="#8A909E" font-family="Manrope, sans-serif" font-size="10.5">Add Item builds the proposed-item list. Send PDF renders the plan and posts it to #ai-pmo-plans — does NOT change the plan's status.</text>
 
-  <text x="60"  y="334" class="num">05</text>
-  <text x="90"  y="334" class="lbl">Tick items, allocate to an agent or human</text>
-  <rect x="60"  y="346" width="160" height="30" rx="5" class="btn-out"/>
-  <text x="140" y="366" class="btn-txt-d" text-anchor="middle">Allocate to Claude</text>
-  <rect x="230" y="346" width="160" height="30" rx="5" class="btn-out"/>
-  <text x="310" y="366" class="btn-txt-d" text-anchor="middle">Allocate to Codex</text>
-  <rect x="400" y="346" width="160" height="30" rx="5" class="btn-out"/>
-  <text x="480" y="366" class="btn-txt-d" text-anchor="middle">Allocate to Human</text>
-  <text x="60"  y="392" class="sub">Items become Shifts. Each Shift auto-creates its UAT/OAT records, bucketed under the shift.</text>
+  <text x="60"  y="332" fill="#2B3990" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">04</text>
+  <text x="90"  y="332" fill="#1D2766" font-family="Manrope, sans-serif" font-weight="600" font-size="11.5">Tick items + allocate to an agent or human (the act of allocating IS the approval)</text>
+  <rect x="60"  y="344" width="160" height="30" rx="5" class="btn-out"/>
+  <text x="140" y="364" class="btn-txt-d" text-anchor="middle">Allocate to Claude</text>
+  <rect x="230" y="344" width="160" height="30" rx="5" class="btn-out"/>
+  <text x="310" y="364" class="btn-txt-d" text-anchor="middle">Allocate to Codex</text>
+  <rect x="400" y="344" width="160" height="30" rx="5" class="btn-out"/>
+  <text x="480" y="364" class="btn-txt-d" text-anchor="middle">Allocate to Human</text>
+  <text x="60"  y="390" fill="#8A909E" font-family="Manrope, sans-serif" font-size="10.5">Items become Shifts. Each Shift auto-creates UAT/OAT records, bucketed under the shift.</text>
 
-  <text x="60"  y="416" class="num">06</text>
-  <text x="90"  y="416" class="lbl">Send the shift to the agent</text>
-  <rect x="60"  y="428" width="180" height="30" rx="5" class="btn-pri"/>
-  <text x="150" y="448" class="btn-txt" text-anchor="middle">Execute via n8n</text>
-  <text x="260" y="448" class="sub">Agent picks it up, works, commits, then calls Complete back into ERPNext.</text>
+  <!-- LANE 2: SHIFT LEVEL -->
+  <line x1="40" y1="430" x2="700" y2="430" stroke="#5A9367" stroke-width="1.5"/>
+  <text x="40" y="422" fill="#5A9367" font-family="Manrope, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2.5">SHIFT-LEVEL — PER-SHIFT AFTER ALLOCATION</text>
+
+  <text x="60"  y="454" fill="#2B3990" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">05</text>
+  <text x="90"  y="454" fill="#1D2766" font-family="Manrope, sans-serif" font-weight="600" font-size="11.5">On each shift row, dispatch the work</text>
+  <rect x="60"  y="466" width="160" height="30" rx="5" class="btn-pri"/>
+  <text x="140" y="486" class="btn-txt" text-anchor="middle">Execute via n8n</text>
+  <rect x="230" y="466" width="90" height="30" rx="5" class="btn-out"/>
+  <text x="275" y="486" class="btn-txt-d" text-anchor="middle">Start</text>
+  <rect x="330" y="466" width="110" height="30" rx="5" class="btn-out"/>
+  <text x="385" y="486" class="btn-txt-d" text-anchor="middle">Complete</text>
+  <rect x="450" y="466" width="90" height="30" rx="5" class="btn-out"/>
+  <text x="495" y="486" class="btn-txt-d" text-anchor="middle">Block</text>
+  <text x="60"  y="518" fill="#8A909E" font-family="Manrope, sans-serif" font-size="10.5">Execute via n8n posts to the webhook → agent runs → calls Complete back into ERPNext, which logs the UAT/OAT runs.</text>
+</svg>"""
+
+# Figure 4 — Tanuj's page-4 hand-written flow (auto plan-review loop)
+REVIEW_FLOW_SVG = r"""
+<svg class="diagram" viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Auto plan-review loop (Tanuj's page-4 sketch)">
+  <defs>
+    <marker id="arrR" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#1D2766"/>
+    </marker>
+    <style>
+      .nd-tanuj  { fill: #5A9367; }
+      .nd-system { fill: #2B3990; }
+      .nd-agent  { fill: #1D2766; }
+      .nd-slack  { fill: #B86B00; }
+      .lbl       { fill: white; font: 700 12px Manrope, sans-serif; }
+      .sub       { fill: #D6DBF5; font: 10px Manrope, sans-serif; }
+      .num       { fill: #5A9367; font: 700 12px 'JetBrains Mono', monospace; }
+    </style>
+  </defs>
+
+  <g text-anchor="middle">
+    <!-- 1. Tanuj: rough plan -->
+    <text x="120" y="26" class="num">01</text>
+    <rect x="40" y="36" width="160" height="60" rx="8" class="nd-tanuj"/>
+    <text x="120" y="60" class="lbl">Tanuj writes a rough plan</text>
+    <text x="120" y="80" class="sub">title + 1-line direction</text>
+
+    <!-- 2. Scheduler picks it up -->
+    <text x="360" y="26" class="num">02</text>
+    <rect x="280" y="36" width="160" height="60" rx="8" class="nd-system"/>
+    <text x="360" y="60" class="lbl">Scheduler picks it up</text>
+    <text x="360" y="80" class="sub">nightly cron — capacity-aware</text>
+
+    <!-- 3. Codex or Claude reads -->
+    <text x="600" y="26" class="num">03</text>
+    <rect x="520" y="36" width="160" height="60" rx="8" class="nd-agent"/>
+    <text x="600" y="60" class="lbl">Codex (or Claude)</text>
+    <text x="600" y="80" class="sub">based on token / usage</text>
+
+    <!-- 4. Drafts plan + sends to Slack -->
+    <text x="600" y="146" class="num">04</text>
+    <rect x="520" y="156" width="160" height="60" rx="8" class="nd-slack"/>
+    <text x="600" y="180" class="lbl">Agent drafts the plan</text>
+    <text x="600" y="200" class="sub">posts PDF + Approve button</text>
+
+    <!-- 5. Tanuj approves -->
+    <text x="360" y="146" class="num">05</text>
+    <rect x="280" y="156" width="160" height="60" rx="8" class="nd-tanuj"/>
+    <text x="360" y="180" class="lbl">Tanuj approves on Slack</text>
+    <text x="360" y="200" class="sub">one click on reMarkable</text>
+
+    <!-- 6. System bulk-allocates -->
+    <text x="120" y="146" class="num">06</text>
+    <rect x="40" y="156" width="160" height="60" rx="8" class="nd-system"/>
+    <text x="120" y="180" class="lbl">System bulk-allocates</text>
+    <text x="120" y="200" class="sub">calls allocate_plan_items</text>
+
+    <!-- 7. Shifts flow into Figure 1 -->
+    <text x="360" y="256" class="num">→</text>
+    <rect x="160" y="266" width="400" height="40" rx="6" class="nd-agent"/>
+    <text x="360" y="290" class="lbl">From here, Figure 1 takes over — Execute via n8n, Start, Complete</text>
+  </g>
+
+  <g stroke="#1D2766" stroke-width="1.5" fill="none" marker-end="url(#arrR)">
+    <line x1="200" y1="66" x2="278" y2="66"/>
+    <line x1="440" y1="66" x2="518" y2="66"/>
+    <line x1="600" y1="96" x2="600" y2="154"/>
+    <line x1="520" y1="186" x2="442" y2="186"/>
+    <line x1="280" y1="186" x2="202" y2="186"/>
+    <line x1="120" y1="216" x2="360" y2="264"/>
+  </g>
 </svg>"""
 
 COVER = f"""
@@ -539,10 +618,10 @@ P_WORKFLOW = f"""
   {bar('VCL PMO · How it works', 'page 03 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>How it works — the buttons in order</h1>
-  <div class="sub">The whole system is driven by six buttons in /app/pmo. Blue = primary action; amber = warning / brand action; sage = brand accent; outline = secondary.</div>
+  <div class="sub">Two lanes: plan-level (four buttons, independent) and shift-level (per-shift after allocation). Blue = primary action; amber = brand action; outline = secondary.</div>
 
   {BUTTON_FLOW_SVG}
-  <p class="caption">Figure 1. The six clicks from idea to running shift. Colours match the deployed UI.</p>
+  <p class="caption">Figure 1. Plan-level vs shift-level — the four plan-level buttons act on a plan but don't change its status; the act of allocating IS the approval. The shift-level row only appears once items become shifts.</p>
 
   <h2>Then the agent loop fires</h2>
   <p>Once a shift is dispatched, the rest of the cycle runs without you. Each lane is one actor; arrows show the handover.</p>
@@ -553,9 +632,78 @@ P_WORKFLOW = f"""
   {foot('VCL PMO · VCL-DEV-PMO-002 · 28 May 2026')}
 </section>"""
 
+# New page — auto plan-review flow (Tanuj's page-4 sketch turned into a diagram)
+P_REVIEW_FLOW = f"""
+<section class="page">
+  {bar('VCL PMO · Auto plan-review (proposed)', 'page 04 · 28 may 2026')}
+  <div style="padding:0 6mm;">
+  <h1>The auto plan-review loop</h1>
+  <div class="sub">Direct from Tanuj's hand-written page-4 annotation on the v4 review. This is the design SHIFT-0002 (Codex) is now writing up as a spec.</div>
+
+  {REVIEW_FLOW_SVG}
+  <p class="caption">Figure 3. The six-step auto-review loop. Tanuj's rough plan → agent drafts → Slack approval → bulk-allocate. After step 6, control returns to Figure 1 (Execute via n8n → Start → Complete).</p>
+
+  <h2>What changes in /app/pmo</h2>
+  <ul>
+    <li><b>Inbox becomes the queue.</b> The Inbox tab gets filtered to "needs Tanuj" — plans waiting for approval, shifts waiting for UAT sign-off, blocked requirements. Today it shows too much.</li>
+    <li><b>New Plan stays the entry point.</b> Tanuj writes a one-line direction in /app/pmo (same modal as today) — no need to leave for Slack.</li>
+    <li><b>The agent drafts.</b> Codex (default) or Claude (fallback when Codex is at quota) reads the rough plan + project context + the last 5 approved plans on the same project, expands the items, hints assignees.</li>
+    <li><b>The PDF lands in Slack.</b> Same <code>Send PDF to Slack</code> button — but now with an "Approve all to Claude / Codex / Human" Block-Kit button below the file.</li>
+    <li><b>One click bulk-allocates.</b> The button calls <code>slack_approve_plan(plan_id, allocate_to)</code> which delegates to the existing <code>allocate_plan_items</code> and stamps <code>approved_by</code> + <code>approved_at</code>.</li>
+  </ul>
+
+  <h3>What stays the same</h3>
+  <ul>
+    <li>You can still allocate manually in /app/pmo whenever you want. The auto-loop is an option, not a replacement.</li>
+    <li>Execute via n8n + Complete are unchanged.</li>
+    <li>UAT/OAT records auto-create on allocation, same as today.</li>
+  </ul>
+  </div>
+  {foot('VCL PMO · VCL-DEV-PMO-002 · 28 May 2026')}
+</section>"""
+
+# New page — FAQ-style answers to Tanuj's 7 annotations on v4
+P_FAQ = f"""
+<section class="page">
+  {bar('VCL PMO · Your questions, answered', 'page 05 · 28 may 2026')}
+  <div style="padding:0 6mm;">
+  <h1>Your review questions, answered</h1>
+  <div class="sub">All seven annotations from the v4 reMarkable review (archived at <code>briefs/review/2026-05-28_status_report_v4_annotated.pdf</code>).</div>
+
+  <div class="qa"><b>Q1. How do we install the Slack bot?</b> See the separate one-page setup card (<code>VCL-PMO_slack_bot_setup_card.pdf</code>). Five steps: create app → add <code>chat:write</code> + <code>files:write</code> scopes → install → invite to <code>#ai-pmo-plans</code> → drop the <code>xoxb-…</code> token into Frappe Cloud's site_config via <code>bench set-config</code>. About 10 minutes.</div>
+
+  <div class="qa"><b>Q2. What about new projects?</b> Today the SPA has no "New Project" button — you have to use the bare Desk form at <code>/app/pmo-project/new</code>. Codex is adding a <code>+ New Project</code> button to the portfolio toolbar (next to "New Requirement"), wired to a new <code>create_project</code> API. Codex Item B in the review-response brief.</div>
+
+  <div class="qa"><b>Q3. Who approves new plans?</b> Today: nothing. A new Plan sits at <code>status=Draft</code> until you click "Allocate selected to …" — the act of allocating IS the approval. Auto-review (Figure 3 above, SHIFT-0002) introduces a Slack-based approval button so you can approve without opening /app/pmo.</div>
+
+  <div class="qa"><b>Q4. How are Send PDF / Allocate / Execute via n8n linked?</b> They're not — they're independent. <b>Send PDF</b> renders + posts and does NOT change plan state. <b>Allocate</b> promotes ticked items into Shifts (status = Allocated). <b>Execute via n8n</b> is per-shift, fires the agent webhook. Figure 1 on page 3 has been split into plan-level vs shift-level lanes to make this obvious.</div>
+
+  <div class="qa"><b>Q5. What does the agent do, and how does it fire up?</b> (1) <code>dispatch_shift(shift_id)</code> reads <code>pmo_n8n_dispatch_url</code> from site_config; (2) POSTs the shift payload to n8n; (3) n8n routes by <code>assigned_to</code> (claude / codex) — currently designed to trigger a CLI runner on the dev machine; (4) the agent works, commits, then POSTs back to <code>/api/method/.../complete_shift</code> with output notes + UAT/OAT results; (5) ERPNext flips status → Done, stamps <code>actual_end</code>, logs the UAT/OAT runs. The n8n routing layer is the gap to close.</div>
+
+  <div class="qa"><b>Q6. The plan-review flow you sketched.</b> That's SHIFT-0002 — Codex's allocated planning shift. Captured exactly as you wrote it, drawn as Figure 3 above. Codex is finishing the spec (<code>briefs/2026-05-28_SCHEDULED_PLAN_REVIEW_SPEC.md</code>) covering: scheduler trigger, capacity probe (<code>pmo_codex_available</code> site_config flag), reviewer payload, Slack-Block-Kit approval surface, action on approve, failure modes.</div>
+
+  <div class="qa"><b>Q7. Inbox first-page UX.</b> Agreed — Inbox is too noisy. Codex is filtering Inbox to "needs Tanuj" only: plans waiting for allocation, shifts waiting for UAT sign-off, blocked requirements, plan reviews pending (once SHIFT-0002 ships). Codex Item C in the review-response brief.</div>
+
+  <h2>Where the work is now</h2>
+  <table class="tbl">
+    <thead><tr><th>Owner</th><th>Item</th><th class="when" style="width:90px;">Status</th></tr></thead>
+    <tbody>
+      <tr><td class="who">Claude</td><td>This v5 status report — incorporates all 7 answers, adds Figure 3 (auto-review), splits Figure 1 lanes.</td><td><span class="chip green"><i></i>DONE</span></td></tr>
+      <tr><td class="who">Claude</td><td>Slack bot setup card (one-page A4).</td><td><span class="chip green"><i></i>DONE</span></td></tr>
+      <tr><td class="who">Codex</td><td>SHIFT-0002 spec from Tanuj's page-4 flow (Item A).</td><td><span class="chip amber"><i></i>ASSIGNED</span></td></tr>
+      <tr><td class="who">Codex</td><td>+ New Project button on portfolio toolbar (Item B).</td><td><span class="chip amber"><i></i>ASSIGNED</span></td></tr>
+      <tr><td class="who">Codex</td><td>Inbox filter — "needs Tanuj" only (Item C).</td><td><span class="chip amber"><i></i>ASSIGNED</span></td></tr>
+      <tr><td class="who">Tanuj</td><td>Install Slack bot per the setup card.</td><td><span class="chip muted"><i></i>READY</span></td></tr>
+      <tr><td class="who">Tanuj</td><td>UAT walk SHIFT-0001 (back-nav fix already shipped).</td><td><span class="chip muted"><i></i>READY</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  {foot('VCL PMO · VCL-DEV-PMO-002 · 28 May 2026')}
+</section>"""
+
 P_ARCH = f"""
 <section class="page">
-  {bar('VCL PMO · Architecture', 'page 04 · 28 may 2026')}
+  {bar('VCL PMO · Architecture', 'page 06 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>Where each piece lives</h1>
   <p>We deliberately do <i>not</i> try to put everything in one tool. Two anchors: ERPNext is the operational source of truth, Slack + Excel are downstream review surfaces that already work for the team.</p>
@@ -576,7 +724,7 @@ P_ARCH = f"""
 
 P_SHOTS = f"""
 <section class="page">
-  {bar('VCL PMO · The deployed UI', 'page 05 · 28 may 2026')}
+  {bar('VCL PMO · The deployed UI', 'page 07 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>What you actually see at /app/pmo</h1>
   <p>Captured today against the live site (<code>https://vimitconverters.frappe.cloud/app/pmo</code>) using a Playwright headless browser with API-token auth. These are the screens you sign in to.</p>
@@ -590,7 +738,7 @@ P_SHOTS = f"""
 
 P_SHOTS_2 = f"""
 <section class="page">
-  {bar('VCL PMO · Project workspace', 'page 06 · 28 may 2026')}
+  {bar('VCL PMO · Project workspace', 'page 08 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>Inside the project workspace</h1>
   <p>Clicking the project card opens its full workspace: 13 sub-tabs across the top, project meta on the side panel, breadcrumb navigation. This is where plans get written and shifts get allocated.</p>
@@ -608,7 +756,7 @@ def swatch(name, hex_, desc, restricted=False):
 
 P_BRAND = f"""
 <section class="page">
-  {bar('VCL PMO · Brand reference', 'page 07 · 28 may 2026')}
+  {bar('VCL PMO · Brand reference', 'page 09 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>VCL Brand v1.1 — the colours we use</h1>
   <p>Every colour in this report comes from VCL Brand & Visual Identity Standards v1.1 (May 2026). Verified against the deployed <code>pmo.css</code> tokens at <code>/app/pmo</code>. No invented hexes.</p>
@@ -657,7 +805,7 @@ P_BRAND = f"""
 
 P_NEXT = f"""
 <section class="page">
-  {bar('VCL PMO · What comes next', 'page 08 · 28 may 2026')}
+  {bar('VCL PMO · What comes next', 'page 10 · 28 may 2026')}
   <div style="padding:0 6mm;">
   <h1>What comes next</h1>
 
@@ -715,6 +863,8 @@ HTML = f"""<!DOCTYPE html>
 {COVER}
 {P_STATUS}
 {P_WORKFLOW}
+{P_REVIEW_FLOW}
+{P_FAQ}
 {P_ARCH}
 {P_SHOTS}
 {P_SHOTS_2}
