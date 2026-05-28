@@ -24,6 +24,7 @@ class VCLPMOPage {
       oatChecks: [],
       raid: [],
       docs: {},
+      notes: [],
       packet: null,
       overview: null,
       gantt: null,
@@ -39,8 +40,11 @@ class VCLPMOPage {
     window.addEventListener("popstate", (event) => {
       if (event.state && event.state.view) {
         Object.assign(this.state, event.state);
-        this.render();
+        this.hydrateForState().then(() => this.render());
+        return;
       }
+      this.applyRouteFromLocation();
+      this.hydrateForState().then(() => this.render());
     });
   }
 
@@ -59,7 +63,8 @@ class VCLPMOPage {
         <div class="pmo-topline">
           <div class="pmo-title"><h1>VCL PMO</h1><p>Portfolio, project workspace, test history, RAID, and documentation</p></div>
           <div class="pmo-spacer"></div>
-          <button class="pmo-btn primary" data-action="new-requirement">New Requirement</button>
+          <button class="pmo-btn primary" data-action="new-note">New Note</button>
+          <button class="pmo-btn" data-action="new-requirement">New Requirement</button>
           <button class="pmo-btn" data-action="refresh">Refresh</button>
         </div>
         <div data-tabs></div>
@@ -88,12 +93,13 @@ class VCLPMOPage {
 
   async boot() {
     this.tick();
+    this.applyRouteFromLocation();
     await this.refresh();
   }
 
   async refresh() {
     await Promise.all([this.loadSummary(), this.loadPortfolio()]);
-    if (this.state.project) await this.loadProject(this.state.project);
+    await this.hydrateForState();
     this.render();
   }
 
@@ -112,31 +118,67 @@ class VCLPMOPage {
   }
 
   async loadPortfolio() {
-    const [projects, requirements, uatCases, oatChecks, raid, docs] = await Promise.all([
+    const [projects, requirements, uatCases, oatChecks, raid, docs, notes] = await Promise.all([
       frappe.db.get_list("PMO Project", { fields: ["name", "project_id", "project_name", "project_short", "system", "status", "priority", "progress", "current_phase", "target_completion"], limit: 200, order_by: "project_id asc" }),
       frappe.db.get_list("PMO Requirement", { fields: ["name", "requirement_id", "project", "area", "requirement", "priority", "status", "requirement_owner", "uat_result", "needs_action"], limit: 800, order_by: "requirement_id asc" }),
       frappe.db.get_list("PMO UAT Case", { fields: ["name", "uat_case_id", "project", "requirement", "description", "latest_result", "latest_run_date", "run_count"], limit: 800, order_by: "uat_case_id asc" }),
       frappe.db.get_list("PMO OAT Check", { fields: ["name", "check_id", "project", "area", "check", "latest_result", "latest_run_date", "run_count"], limit: 800, order_by: "check_id asc" }),
       frappe.db.get_list("PMO RAID Item", { fields: ["name", "raid_id", "project", "type", "title", "severity", "probability", "status", "due_date"], limit: 800, order_by: "due_date asc" }),
       this.call("vcl_pmo_doctypes.api.documents_for"),
+      this.call("vcl_pmo_doctypes.api.notes_for"),
     ]);
-    Object.assign(this.state, { projects, requirements, uatCases, oatChecks, raid, docs });
+    Object.assign(this.state, { projects, requirements, uatCases, oatChecks, raid, docs, notes });
   }
 
   async loadProject(projectId) {
-    const [packet, overview, gantt, docs, plans, shifts] = await Promise.all([
+    const [packet, overview, gantt, docs, plans, shifts, notes] = await Promise.all([
       this.call("vcl_pmo_doctypes.api.project_packet", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_overview", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_gantt", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.documents_for", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_plans", { project_id: projectId }),
       this.call("vcl_pmo_doctypes.api.project_shifts", { project_id: projectId }),
+      this.call("vcl_pmo_doctypes.api.notes_for", { project_id: projectId }),
     ]);
-    Object.assign(this.state, { packet, overview, gantt, docs, plans, shifts });
+    Object.assign(this.state, { packet, overview, gantt, docs, plans, shifts, notes });
+  }
+
+  async hydrateForState() {
+    if (this.state.project) await this.loadProject(this.state.project);
+    if (this.state.view === "plan" && this.state.planId) {
+      this.state.planDetail = await this.call("vcl_pmo_doctypes.api.plan_detail", { plan_id: this.state.planId });
+    }
+    if (this.state.view === "project" && !this.state.project) {
+      this.state.view = "portfolio:projects";
+      this.state.subtab = "overview";
+    }
+  }
+
+  routeState() {
+    const params = new URLSearchParams();
+    ["view", "project", "subtab", "caseKind", "caseId", "runName", "planId", "shiftId"].forEach((key) => {
+      if (this.state[key]) params.set(key, this.state[key]);
+    });
+    return params.toString();
+  }
+
+  applyRouteFromLocation() {
+    const raw = decodeURIComponent((window.location.hash || "").replace(/^#/, ""));
+    if (!raw) return;
+    if (!raw.includes("=")) {
+      this.state.view = raw;
+      return;
+    }
+    const params = new URLSearchParams(raw);
+    ["view", "project", "subtab", "caseKind", "caseId", "runName", "planId", "shiftId"].forEach((key) => {
+      const value = params.get(key);
+      if (value) this.state[key] = value;
+    });
   }
 
   pushState() {
-    history.pushState({ view: this.state.view, project: this.state.project, subtab: this.state.subtab, caseKind: this.state.caseKind, caseId: this.state.caseId, runName: this.state.runName, planId: this.state.planId, shiftId: this.state.shiftId }, "", `/app/pmo#${encodeURIComponent(this.state.view)}`);
+    const state = { view: this.state.view, project: this.state.project, subtab: this.state.subtab, caseKind: this.state.caseKind, caseId: this.state.caseId, runName: this.state.runName, planId: this.state.planId, shiftId: this.state.shiftId };
+    history.pushState(state, "", `/app/pmo#${this.routeState()}`);
   }
 
   setPortfolioView(view) {
@@ -166,6 +208,9 @@ class VCLPMOPage {
 
   action(name, el) {
     if (name === "refresh") return this.refresh();
+    if (name === "new-note") return this.modalNote();
+    if (name === "assign-note") return this.assignNote(el.dataset.note);
+    if (name === "archive-note") return this.archiveNote(el.dataset.note);
     if (name === "new-requirement") return this.modalRequirement();
     if (name === "back-portfolio") return this.setPortfolioView("projects");
     if (name === "back-project") return this.openProject(this.state.project, this.state.subtab || "plans");
@@ -203,9 +248,10 @@ class VCLPMOPage {
   renderPortfolio() {
     const active = this.state.view.split(":")[1];
     this.$root.find("[data-tabs]").html(this.renderTabs([
-      ["inbox", "Inbox"], ["projects", "Projects"], ["roadmap", "Roadmap"], ["raid", "RAID"], ["documentation", "Documentation"], ["test-status", "Test Status"]
+      ["inbox", "Inbox"], ["notes", "Notes"], ["projects", "Projects"], ["roadmap", "Roadmap"], ["raid", "RAID"], ["documentation", "Documentation"], ["test-status", "Test Status"]
     ], active));
     if (active === "inbox") return this.renderPortfolioInbox();
+    if (active === "notes") return this.renderNotes(null);
     if (active === "projects") return this.renderPortfolioProjects();
     if (active === "roadmap") return this.renderRoadmap();
     if (active === "raid") return this.renderPortfolioRAID();
@@ -238,10 +284,11 @@ class VCLPMOPage {
 
   renderProject() {
     const p = this.state.packet?.project || {};
-    this.$root.find("[data-tabs]").html(`<div class="pmo-subtabs"><button data-action="back-portfolio">Portfolio</button>${[["overview","Overview"],["timeline","Timeline"],["open","Open Items"],["plans","Plans"],["shifts","Shifts"],["milestones","Milestones"],["raid","RAID"],["uat","UAT"],["oat","OAT"],["history","Test History"],["documentation","Documentation"],["activity","Activity"]].map(i => `<button data-subtab="${i[0]}" class="${this.state.subtab === i[0] ? "active" : ""}">${i[1]}</button>`).join("")}</div>`);
+    this.$root.find("[data-tabs]").html(`<div class="pmo-subtabs"><button data-action="back-portfolio">Portfolio</button>${[["overview","Overview"],["timeline","Timeline"],["open","Open Items"],["notes","Notes"],["plans","Plans"],["shifts","Shifts"],["milestones","Milestones"],["raid","RAID"],["uat","UAT"],["oat","OAT"],["history","Test History"],["documentation","Documentation"],["activity","Activity"]].map(i => `<button data-subtab="${i[0]}" class="${this.state.subtab === i[0] ? "active" : ""}">${i[1]}</button>`).join("")}</div>`);
     if (this.state.subtab === "overview") return this.renderProjectOverview(p);
     if (this.state.subtab === "timeline") return this.renderTimeline();
     if (this.state.subtab === "open") return this.renderOpenItems();
+    if (this.state.subtab === "notes") return this.renderNotes(this.state.project);
     if (this.state.subtab === "plans") return this.renderPlans();
     if (this.state.subtab === "shifts") return this.renderShifts();
     if (this.state.subtab === "milestones") return this.renderMilestones();
@@ -303,6 +350,20 @@ class VCLPMOPage {
     this.$body.html(`${this.head("Test History", "Open UAT/OAT cases to inspect their run history")}<div class="pmo-two-col"><div>${this.caseTable("uat", this.state.packet.uat_cases)}</div><div>${this.caseTable("oat", this.state.packet.oat_checks)}</div></div>`);
   }
 
+  renderNotes(projectId) {
+    const rows = this.state.notes || [];
+    const inbox = rows.filter(n => !n.project || n.status === "Inbox");
+    const sorted = projectId ? rows.filter(n => n.project === projectId && n.status !== "Inbox") : rows.filter(n => n.project && n.status !== "Inbox");
+    const title = projectId ? "Project Notes" : "Notes Inbox";
+    const sub = projectId ? "Notes assigned to this project plus unsorted inbox notes" : "Capture loose notes, then assign them to a PMO project";
+    this.$body.html(`${this.head(title, sub)}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-note">New Note</button></div><h3>Inbox</h3>${this.noteList(inbox, true)}<h3>Sorted</h3>${this.noteList(sorted, false)}`);
+  }
+
+  noteList(rows, sortable) {
+    if (!rows.length) return "<div class='pmo-card pmo-muted'>No notes here.</div>";
+    return `<div class="pmo-list">${rows.map(n => `<div class="pmo-card"><div class="pmo-card-title">${this.esc(n.title)}</div><div class="pmo-muted pmo-mono">${this.esc(n.name)} · ${this.esc(n.note_type || "General")} · ${this.esc(n.status || "Inbox")}</div><div class="pmo-markdown">${this.renderMD((n.content_md || "").slice(0, 700))}</div><div class="pmo-actions"><select data-note-project="${n.name}"><option value="">Unassigned</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === n.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select><button class="pmo-btn primary" data-action="assign-note" data-note="${n.name}">${sortable ? "Sort" : "Move"}</button><button class="pmo-btn" data-action="archive-note" data-note="${n.name}">Archive</button><button class="pmo-btn" data-action="open-desk" data-doctype="PMO Note" data-name="${n.name}">Open in Desk</button></div></div>`).join("")}</div>`;
+  }
+
   renderDocumentation(projectId) {
     const docs = this.state.docs || {};
     this.$body.html(`${this.head("Documentation", "PMO documents stored in Frappe markdown fields")}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-doc">New Document</button></div>${Object.entries(docs).map(([type, rows]) => `<h3>${this.esc(type)}</h3><div class="pmo-grid">${rows.map(d => `<div class="pmo-card" data-doc="${d.name}"><div class="pmo-card-title">${this.esc(d.title)}</div><p>${this.esc(d.status)} · v${this.esc(d.version || "1.0")}</p></div>`).join("")}</div>`).join("") || "<div class='pmo-card'>No PMO Documents yet.</div>"}`);
@@ -358,6 +419,9 @@ class VCLPMOPage {
   modalRequirement() { this.modal("New Requirement", `<div class="pmo-form-grid"><label>ID<input data-field="requirement_id"></label><label>Project<select data-field="project">${this.state.projects.map(p => `<option value="${p.name}">${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Area<input data-field="area"></label><label>Priority<select data-field="priority"><option>Must Have</option><option>Should</option><option>Nice</option></select></label><label class="span2">Requirement<textarea data-field="requirement"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO Requirement"); doc.status = "Not Started"; await frappe.db.insert(doc); this.closeOverlay(); await this.refresh(); }); }
   modalRun(kind, caseName) { this.modal(`New ${kind.toUpperCase()} Run`, `<div class="pmo-form-grid"><label>Result<select data-field="result"><option>Pass</option><option>Fail</option><option>Blocked</option><option>Not Run</option></select></label><label>Environment<input data-field="environment" value="Frappe Cloud production"></label><label class="span2">Evidence<textarea data-field="evidence"></textarea></label><label class="span2">Notes<textarea data-field="notes"></textarea></label></div>`, async () => { const values = this.formValues(); await this.call("vcl_pmo_doctypes.api.new_run", { case_id: caseName, kind, result: values.result, evidence: values.evidence, notes: values.notes, environment: values.environment }); this.closeOverlay(); await this.loadProject(this.state.project); await this.openCase(kind, caseName); }); }
   modalRAID(type) { this.modal(`New ${type}`, `<div class="pmo-form-grid"><label>ID<input data-field="raid_id"></label><label>Type<input data-field="type" value="${type}"></label><label class="span2">Title<input data-field="title"></label><label>Severity<select data-field="severity"><option>High</option><option>Critical</option><option>Medium</option><option>Low</option></select></label><label>Status<select data-field="status"><option>Open</option><option>Mitigating</option><option>Accepted</option><option>Closed</option></select></label><label class="span2">Mitigation<textarea data-field="mitigation"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO RAID Item"); doc.project = this.state.project; await frappe.db.insert(doc); this.closeOverlay(); await this.loadProject(this.state.project); this.render(); }); }
+  modalNote() { this.modal("New Note", `<div class="pmo-form-grid"><label class="span2">Title<input data-field="title"></label><label>Project<select data-field="project"><option value="">Inbox / unsorted</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === this.state.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Type<select data-field="note_type"><option>General</option><option>Idea</option><option>Issue</option><option>Decision</option><option>Meeting</option><option>Follow-up</option></select></label><label class="span2">Note<textarea data-field="content_md" rows="7"></textarea></label></div>`, async () => { const v = this.formValues(); await this.call("vcl_pmo_doctypes.api.create_note", { title: v.title, content_md: v.content_md, project_id: v.project || null, note_type: v.note_type }); this.closeOverlay(); await this.refresh(); }); }
+  async assignNote(name) { const project = this.$body.find(`[data-note-project="${name}"]`).val() || null; await this.call("vcl_pmo_doctypes.api.assign_note", { note_id: name, project_id: project }); await this.refresh(); }
+  async archiveNote(name) { await this.call("vcl_pmo_doctypes.api.assign_note", { note_id: name, status: "Archived" }); await this.refresh(); }
   modalDocument() { this.modal("New Document", `<div class="pmo-form-grid"><label>ID<input data-field="document_id"></label><label>Type<select data-field="doc_type"><option>How-to</option><option>Workflow</option><option>SOP</option><option>Spec</option><option>Brief</option><option>Decision Log</option></select></label><label class="span2">Title<input data-field="title"></label><label class="span2">Markdown<textarea data-field="content_md"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO Document"); doc.project = this.state.project || null; doc.status = "Draft"; await frappe.db.insert(doc); this.closeOverlay(); await this.refresh(); }); }
   formValues() { const values = {}; this.$overlay.find("[data-field]").each((_, el) => values[el.dataset.field] = $(el).val()); return values; }
   formDoc(doctype) { return Object.assign({ doctype }, this.formValues()); }

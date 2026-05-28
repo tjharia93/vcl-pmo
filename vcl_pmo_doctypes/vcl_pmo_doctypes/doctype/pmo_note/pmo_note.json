@@ -1,0 +1,86 @@
+{
+  "doctype": "DocType",
+  "name": "PMO Note",
+  "module": "VCL PMO Doctypes",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "format:NOTE-{YYYY}-{MM}-{####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "PMO User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Project",
+      "fieldtype": "Link",
+      "options": "PMO Project",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "note_type",
+      "label": "Note Type",
+      "fieldtype": "Select",
+      "options": "General\nIdea\nIssue\nDecision\nMeeting\nFollow-up",
+      "default": "General",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Inbox\nSorted\nConverted\nArchived",
+      "default": "Inbox",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "content_md",
+      "label": "Content",
+      "fieldtype": "Long Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "source",
+      "label": "Source",
+      "fieldtype": "Data",
+      "default": "PMO Notes"
+    },
+    {
+      "fieldname": "captured_by",
+      "label": "Captured By",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "captured_at",
+      "label": "Captured At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sorted_at",
+      "label": "Sorted At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ]
+}

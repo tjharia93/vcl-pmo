@@ -16,6 +16,7 @@ PMO_DOCTYPES = {
     "PMO OAT Check",
     "PMO OAT Run",
     "PMO Document",
+    "PMO Note",
     "PMO Agent Log",
     "PMO Sync Log",
 }
@@ -233,6 +234,52 @@ def documents_for(project_id=None):
     for row in rows:
         grouped[row.doc_type or "Other"].append(row)
     return dict(grouped)
+
+
+@frappe.whitelist()
+def notes_for(project_id=None, include_inbox=1):
+    _require_pmo_user()
+    filters = {"status": ["!=", "Archived"]}
+    if project_id:
+        project_name = _project_name(project_id)
+        if int(include_inbox or 0):
+            filters["project"] = ["in", [project_name, ""]]
+        else:
+            filters["project"] = project_name
+    return frappe.get_all("PMO Note", filters=filters, fields=["*"], order_by="modified desc", limit=500)
+
+
+@frappe.whitelist()
+def create_note(title, content_md, project_id=None, note_type="General", source="PMO Notes"):
+    _require_pmo_user()
+    project_name = _project_name(project_id) if project_id else None
+    doc = frappe.get_doc({
+        "doctype": "PMO Note",
+        "title": title,
+        "project": project_name,
+        "note_type": note_type or "General",
+        "status": "Sorted" if project_name else "Inbox",
+        "content_md": content_md,
+        "source": source or "PMO Notes",
+    })
+    doc.insert(ignore_permissions=False)
+    return {"ok": True, "name": doc.name, "status": doc.status, "project": doc.project}
+
+
+@frappe.whitelist()
+def assign_note(note_id, project_id=None, status=None):
+    _require_pmo_user()
+    if not frappe.db.exists("PMO Note", note_id):
+        frappe.throw(f"PMO Note not found: {note_id}")
+    values = {}
+    if project_id is not None:
+        values["project"] = _project_name(project_id) if project_id else None
+    if status:
+        values["status"] = status
+    elif values.get("project"):
+        values["status"] = "Sorted"
+    frappe.db.set_value("PMO Note", note_id, values)
+    return {"ok": True, "name": note_id, **values}
 
 
 @frappe.whitelist()
