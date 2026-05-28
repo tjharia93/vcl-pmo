@@ -121,8 +121,8 @@ class VCLPMOPage {
     const [projects, requirements, uatCases, oatChecks, raid, docs, notes] = await Promise.all([
       frappe.db.get_list("PMO Project", { fields: ["name", "project_id", "project_name", "project_short", "system", "status", "priority", "progress", "current_phase", "target_completion"], limit: 200, order_by: "project_id asc" }),
       frappe.db.get_list("PMO Requirement", { fields: ["name", "requirement_id", "project", "area", "requirement", "priority", "status", "requirement_owner", "uat_result", "needs_action"], limit: 800, order_by: "requirement_id asc" }),
-      frappe.db.get_list("PMO UAT Case", { fields: ["name", "uat_case_id", "project", "requirement", "description", "latest_result", "latest_run_date", "run_count"], limit: 800, order_by: "uat_case_id asc" }),
-      frappe.db.get_list("PMO OAT Check", { fields: ["name", "check_id", "project", "area", "check", "latest_result", "latest_run_date", "run_count"], limit: 800, order_by: "check_id asc" }),
+      frappe.db.get_list("PMO UAT Case", { fields: ["name", "uat_case_id", "project", "requirement", "description", "latest_result", "latest_run_date", "run_count", "bucket", "linked_shift", "linked_task", "linked_plan"], limit: 800, order_by: "uat_case_id asc" }),
+      frappe.db.get_list("PMO OAT Check", { fields: ["name", "check_id", "project", "area", "check", "latest_result", "latest_run_date", "run_count", "bucket", "linked_shift", "linked_task", "linked_plan"], limit: 800, order_by: "check_id asc" }),
       frappe.db.get_list("PMO RAID Item", { fields: ["name", "raid_id", "project", "type", "title", "severity", "probability", "status", "due_date"], limit: 800, order_by: "due_date asc" }),
       this.call("vcl_pmo_doctypes.api.documents_for"),
       this.call("vcl_pmo_doctypes.api.notes_for"),
@@ -144,14 +144,60 @@ class VCLPMOPage {
   }
 
   async hydrateForState() {
+    await this.inferProjectForState();
     if (this.state.project) await this.loadProject(this.state.project);
     if (this.state.view === "plan" && this.state.planId) {
       this.state.planDetail = await this.call("vcl_pmo_doctypes.api.plan_detail", { plan_id: this.state.planId });
     }
-    if (this.state.view === "project" && !this.state.project) {
+    if (["project", "case", "run", "plan", "shift"].includes(this.state.view) && !this.state.project) {
       this.state.view = "portfolio:projects";
       this.state.subtab = "overview";
+      this.clearDrilldownState();
     }
+  }
+
+  async inferProjectForState() {
+    if (this.state.project) return;
+    if (this.state.view === "plan" && this.state.planId) {
+      const planName = await frappe.db.get_value("PMO Plan", { plan_id: this.state.planId }, "name");
+      const name = planName?.message?.name || this.state.planId;
+      if (name) {
+        const plan = await frappe.db.get_doc("PMO Plan", name);
+        this.state.project = plan.project;
+      }
+    }
+    if (this.state.view === "shift" && this.state.shiftId) {
+      const shiftName = await frappe.db.get_value("PMO Shift", { shift_id: this.state.shiftId }, "name");
+      const name = shiftName?.message?.name || this.state.shiftId;
+      if (name) {
+        const shift = await frappe.db.get_doc("PMO Shift", name);
+        this.state.project = shift.project;
+      }
+    }
+    if (this.state.view === "case" && this.state.caseKind && this.state.caseId) {
+      const doctype = this.state.caseKind === "oat" ? "PMO OAT Check" : "PMO UAT Case";
+      const idField = this.state.caseKind === "oat" ? "check_id" : "uat_case_id";
+      const caseName = await frappe.db.get_value(doctype, { [idField]: this.state.caseId }, "name");
+      const name = caseName?.message?.name || this.state.caseId;
+      if (name) {
+        const row = await frappe.db.get_doc(doctype, name);
+        this.state.project = row.project;
+      }
+    }
+    if (this.state.view === "run" && this.state.caseKind && this.state.runName) {
+      const doctype = this.state.caseKind === "oat" ? "PMO OAT Run" : "PMO UAT Run";
+      const caseField = this.state.caseKind === "oat" ? "oat_check" : "uat_case";
+      const caseDoctype = this.state.caseKind === "oat" ? "PMO OAT Check" : "PMO UAT Case";
+      const run = await frappe.db.get_doc(doctype, this.state.runName);
+      if (run && run[caseField]) {
+        const row = await frappe.db.get_doc(caseDoctype, run[caseField]);
+        this.state.project = row.project;
+      }
+    }
+  }
+
+  clearDrilldownState() {
+    Object.assign(this.state, { caseKind: null, caseId: null, runName: null, planId: null, shiftId: null, planDetail: null });
   }
 
   routeState() {
@@ -164,6 +210,7 @@ class VCLPMOPage {
 
   applyRouteFromLocation() {
     const raw = decodeURIComponent((window.location.hash || "").replace(/^#/, ""));
+    Object.assign(this.state, { view: "portfolio:inbox", project: null, subtab: "overview", caseKind: null, caseId: null, runName: null, planId: null, shiftId: null, planDetail: null });
     if (!raw) return;
     if (!raw.includes("=")) {
       this.state.view = raw;
@@ -182,26 +229,28 @@ class VCLPMOPage {
   }
 
   setPortfolioView(view) {
-    Object.assign(this.state, { view: `portfolio:${view}`, project: null, caseKind: null, caseId: null, runName: null });
+    Object.assign(this.state, { view: "portfolio:" + view, project: null, subtab: "overview" });
+    this.clearDrilldownState();
     this.pushState();
     this.render();
   }
 
   async openProject(projectId, subtab = "overview") {
-    Object.assign(this.state, { view: "project", project: projectId, subtab, caseKind: null, caseId: null, runName: null });
+    Object.assign(this.state, { view: "project", project: projectId, subtab });
+    this.clearDrilldownState();
     await this.loadProject(projectId);
     this.pushState();
     this.render();
   }
 
   async openCase(kind, caseName) {
-    Object.assign(this.state, { view: "case", caseKind: kind, caseId: caseName, runName: null });
+    Object.assign(this.state, { view: "case", caseKind: kind, caseId: caseName, runName: null, planId: null, shiftId: null });
     this.pushState();
     this.render();
   }
 
   async openRun(kind, runName) {
-    Object.assign(this.state, { view: "run", caseKind: kind, runName });
+    Object.assign(this.state, { view: "run", caseKind: kind, runName, planId: null, shiftId: null });
     this.pushState();
     this.render();
   }
@@ -386,7 +435,32 @@ class VCLPMOPage {
   taskRow(t) { return `<div class="pmo-row" data-task="${t.name}"><div class="pmo-dot">T</div><div><b>${this.esc(t.title)}</b><small>${this.date(t.start_date)} → ${this.date(t.end_date)} · ${this.esc(t.assignee || "")}</small></div>${this.chip(t.status)}</div>`; }
   raidRow(r) { return `<div class="pmo-row" data-raid="${r.name}"><div class="pmo-dot">R</div><div><b>${this.esc(r.title)}</b><small>${this.esc(r.raid_id)} · ${this.esc(r.type)} · due ${this.date(r.due_date)}</small></div>${this.chip(r.severity || r.status)}</div>`; }
   raidTable(rows) { return `<table class="pmo-table"><thead><tr><th>ID</th><th>Type</th><th>Title</th><th>Severity</th><th>Probability</th><th>Status</th><th>Due</th></tr></thead><tbody>${rows.map(r => `<tr data-raid="${r.name}"><td class="pmo-mono">${this.esc(r.raid_id)}</td><td>${this.esc(r.type)}</td><td>${this.esc(r.title)}</td><td>${this.chip(r.severity)}</td><td>${this.esc(r.probability || "")}</td><td>${this.chip(r.status)}</td><td>${this.date(r.due_date)}</td></tr>`).join("")}</tbody></table>`; }
-  caseTable(kind, rows) { const id = kind === "uat" ? "uat_case_id" : "check_id"; const text = kind === "uat" ? "description" : "check"; return `<table class="pmo-table"><thead><tr><th>ID</th><th>Definition</th><th>Latest</th><th>Last Run</th><th>Runs</th></tr></thead><tbody>${rows.map(r => `<tr data-case="${r.name}" data-kind="${kind}"><td class="pmo-mono">${this.esc(r[id])}</td><td>${this.esc(r[text])}</td><td>${this.chip(r.latest_result || "Not Yet Run")}</td><td>${this.date(r.latest_run_date)}</td><td>${Number(r.run_count || 0)}</td></tr>`).join("")}</tbody></table>`; }
+  caseTable(kind, rows) {
+    const id = kind === "uat" ? "uat_case_id" : "check_id";
+    const text = kind === "uat" ? "description" : "check";
+    const groups = new Map();
+    (rows || []).forEach(r => {
+      const key = r.bucket || r.linked_shift || r.linked_task || r.linked_plan || "Ungrouped";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+      if (a === "Ungrouped") return 1;
+      if (b === "Ungrouped") return -1;
+      return String(a).localeCompare(String(b));
+    });
+    const bucketBlock = (key) => {
+      const items = groups.get(key);
+      const passed = items.filter(r => r.latest_result === "Pass").length;
+      const failed = items.filter(r => r.latest_result === "Fail").length;
+      const blocked = items.filter(r => r.latest_result === "Blocked").length;
+      const notRun = items.filter(r => !r.latest_result || r.latest_result === "Not Yet Run").length;
+      const meta = `<span class="pmo-bucket-meta">${items.length} item${items.length === 1 ? "" : "s"} · ${passed} pass · ${failed} fail · ${blocked} blocked · ${notRun} not run</span>`;
+      const rowsHtml = items.map(r => `<tr data-case="${r.name}" data-kind="${kind}"><td class="pmo-mono pmo-indent">${this.esc(r[id])}</td><td>${this.esc(r[text])}</td><td>${this.chip(r.latest_result || "Not Yet Run")}</td><td>${this.date(r.latest_run_date)}</td><td>${Number(r.run_count || 0)}</td></tr>`).join("");
+      return `<tr class="pmo-bucket-row" data-bucket="${this.esc(key)}"><td colspan="5"><b>${this.esc(key)}</b> ${meta}</td></tr>${rowsHtml}`;
+    };
+    return `<table class="pmo-table pmo-case-table"><thead><tr><th>ID</th><th>Definition</th><th>Latest</th><th>Last Run</th><th>Runs</th></tr></thead><tbody>${sortedKeys.map(bucketBlock).join("") || "<tr><td colspan='5' class='pmo-muted'>No cases yet.</td></tr>"}</tbody></table>`;
+  }
 
   ganttSVG() {
     const tasks = this.state.gantt?.tasks || [];
@@ -416,7 +490,7 @@ class VCLPMOPage {
   modal(title, body, saveFn) { this.closeOverlay(); this.$overlay = $(`<div><div class="pmo-modal-backdrop" data-action="close-overlay"></div><section class="pmo-modal"><header><h3>${this.esc(title)}</h3></header><div class="pmo-modal-body">${body}<div class="pmo-actions"><button class="pmo-btn primary" data-save>Save</button><button class="pmo-btn" data-action="close-overlay">Cancel</button></div></div></section></div>`).appendTo(document.body); this.$overlay.on("click", "[data-action]", (event) => this.action(event.currentTarget.dataset.action, event.currentTarget)); this.$overlay.find("[data-save]").on("click", saveFn); }
   closeOverlay() { if (this.$overlay) this.$overlay.remove(); this.$overlay = null; }
 
-  modalRequirement() { this.modal("New Requirement", `<div class="pmo-form-grid"><label>ID<input data-field="requirement_id"></label><label>Project<select data-field="project">${this.state.projects.map(p => `<option value="${p.name}">${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Area<input data-field="area"></label><label>Priority<select data-field="priority"><option>Must Have</option><option>Should</option><option>Nice</option></select></label><label class="span2">Requirement<textarea data-field="requirement"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO Requirement"); doc.status = "Not Started"; await frappe.db.insert(doc); this.closeOverlay(); await this.refresh(); }); }
+  modalRequirement() { this.modal("New Requirement", `<div class="pmo-form-grid"><label>Project<select data-field="project">${this.state.projects.map(p => `<option value="${p.name}" ${p.name === this.state.project ? "selected" : ""}>${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Area<input data-field="area"></label><label>Priority<select data-field="priority"><option>Must Have</option><option>Should</option><option>Nice</option></select></label><label class="span2">Requirement<textarea data-field="requirement"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO Requirement"); doc.status = "Not Started"; await frappe.db.insert(doc); this.closeOverlay(); await this.refresh(); }); }
   modalRun(kind, caseName) { this.modal(`New ${kind.toUpperCase()} Run`, `<div class="pmo-form-grid"><label>Result<select data-field="result"><option>Pass</option><option>Fail</option><option>Blocked</option><option>Not Run</option></select></label><label>Environment<input data-field="environment" value="Frappe Cloud production"></label><label class="span2">Evidence<textarea data-field="evidence"></textarea></label><label class="span2">Notes<textarea data-field="notes"></textarea></label></div>`, async () => { const values = this.formValues(); await this.call("vcl_pmo_doctypes.api.new_run", { case_id: caseName, kind, result: values.result, evidence: values.evidence, notes: values.notes, environment: values.environment }); this.closeOverlay(); await this.loadProject(this.state.project); await this.openCase(kind, caseName); }); }
   modalRAID(type) { this.modal(`New ${type}`, `<div class="pmo-form-grid"><label>ID<input data-field="raid_id"></label><label>Type<input data-field="type" value="${type}"></label><label class="span2">Title<input data-field="title"></label><label>Severity<select data-field="severity"><option>High</option><option>Critical</option><option>Medium</option><option>Low</option></select></label><label>Status<select data-field="status"><option>Open</option><option>Mitigating</option><option>Accepted</option><option>Closed</option></select></label><label class="span2">Mitigation<textarea data-field="mitigation"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO RAID Item"); doc.project = this.state.project; await frappe.db.insert(doc); this.closeOverlay(); await this.loadProject(this.state.project); this.render(); }); }
   modalNote() { this.modal("New Note", `<div class="pmo-form-grid"><label class="span2">Title<input data-field="title"></label><label>Project<select data-field="project"><option value="">Inbox / unsorted</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === this.state.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Type<select data-field="note_type"><option>General</option><option>Idea</option><option>Issue</option><option>Decision</option><option>Meeting</option><option>Follow-up</option></select></label><label class="span2">Note<textarea data-field="content_md" rows="7"></textarea></label></div>`, async () => { const v = this.formValues(); await this.call("vcl_pmo_doctypes.api.create_note", { title: v.title, content_md: v.content_md, project_id: v.project || null, note_type: v.note_type }); this.closeOverlay(); await this.refresh(); }); }
@@ -439,7 +513,7 @@ class VCLPMOPage {
     const plan = this.state.plans.find(p => p.name === planName || p.plan_id === planName);
     const planId = plan ? plan.plan_id : planName;
     const detail = await this.call("vcl_pmo_doctypes.api.plan_detail", { plan_id: planId });
-    Object.assign(this.state, { view: "plan", planId, planDetail: detail });
+    Object.assign(this.state, { view: "plan", project: detail.plan.project || this.state.project, subtab: "plans", planId, planDetail: detail, shiftId: null, caseKind: null, caseId: null, runName: null });
     this.pushState();
     this.render();
   }
@@ -447,7 +521,7 @@ class VCLPMOPage {
   async openShift(shiftName) {
     const shift = this.state.shifts.find(s => s.name === shiftName || s.shift_id === shiftName);
     const shiftId = shift ? shift.shift_id : shiftName;
-    Object.assign(this.state, { view: "shift", shiftId });
+    Object.assign(this.state, { view: "shift", subtab: "shifts", shiftId, planId: null, caseKind: null, caseId: null, runName: null });
     this.pushState();
     this.render();
   }

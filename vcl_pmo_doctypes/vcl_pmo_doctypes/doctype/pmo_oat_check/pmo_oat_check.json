@@ -42,6 +42,30 @@
       "reqd": 1
     },
     {
+      "fieldname": "bucket",
+      "label": "Bucket",
+      "fieldtype": "Data",
+      "description": "Display label for grouping checks under a parent (Shift / Task / Plan / Push). Auto-filled when created from a Shift or Plan."
+    },
+    {
+      "fieldname": "linked_shift",
+      "label": "Linked Shift",
+      "fieldtype": "Link",
+      "options": "PMO Shift"
+    },
+    {
+      "fieldname": "linked_task",
+      "label": "Linked Task",
+      "fieldtype": "Link",
+      "options": "PMO Task"
+    },
+    {
+      "fieldname": "linked_plan",
+      "label": "Linked Plan",
+      "fieldtype": "Link",
+      "options": "PMO Plan"
+    },
+    {
       "fieldname": "check",
       "label": "Check",
       "fieldtype": "Text",

@@ -710,13 +710,18 @@ def _autocreate_uat_for_promoted(spawned, item, plan):
         return None  # handled by PMOShift.before_save controller
     prefix = (frappe.db.get_value("PMO Project", plan.project, "project_short") or "X").upper()
     case_id = _next_id(f"UAT-{prefix}-PLAN", "PMO UAT Case")
-    doc = frappe.get_doc({
+    payload = {
         "doctype": "PMO UAT Case",
         "uat_case_id": case_id,
         "project": plan.project,
+        "bucket": plan.plan_id,
+        "linked_plan": plan.name,
         "description": f"UAT for {spawned['doctype']} {spawned['name']}: {item.title}",
         "acceptance_criteria": item.description or "",
-    })
+    }
+    if spawned["doctype"] == "PMO Task":
+        payload["linked_task"] = spawned["name"]
+    doc = frappe.get_doc(payload)
     doc.insert(ignore_permissions=False)
     return doc.name
 
@@ -726,14 +731,19 @@ def _autocreate_oat_for_promoted(spawned, item, plan):
         return None  # handled by PMOShift.before_save controller
     prefix = (frappe.db.get_value("PMO Project", plan.project, "project_short") or "X").upper()
     check_id = _next_id(f"OAT-{prefix}-PLAN", "PMO OAT Check")
-    doc = frappe.get_doc({
+    payload = {
         "doctype": "PMO OAT Check",
         "check_id": check_id,
         "project": plan.project,
         "area": item.item_type,
+        "bucket": plan.plan_id,
+        "linked_plan": plan.name,
         "check": f"OAT for {spawned['doctype']} {spawned['name']}: {item.title}",
         "acceptance_criteria": item.description or "",
-    })
+    }
+    if spawned["doctype"] == "PMO Task":
+        payload["linked_task"] = spawned["name"]
+    doc = frappe.get_doc(payload)
     doc.insert(ignore_permissions=False)
     return doc.name
 
@@ -893,3 +903,208 @@ def plan_detail(plan_id):
             "promoted_at": it.promoted_at,
         })
     return {"plan": doc.as_dict(), "items": items}
+
+
+# ---------------------------------------------------------------------------
+# Slack integration — push PMO Plans to Slack as VCL-branded PDFs
+# Channel and bot token come from site_config.json keys:
+#   pmo_slack_bot_token         (required) - xoxb-* with chat:write + files:write
+#   pmo_slack_plans_channel     (default C0B5DA141MM) - target channel id
+# ---------------------------------------------------------------------------
+
+PMO_SLACK_DEFAULT_CHANNEL = "C0B5DA141MM"  # #ai-pmo-plans on Vimit Converters workspace
+
+
+def _vcl_brand_html(plan, items, project):
+    """Render a single PMO Plan as a VCL-branded HTML page sized for A4 / Boox / reMarkable.
+
+    Body font is 14pt for high-contrast e-ink reading. Primary blue is VCL Brand v1.0 #1F4E79.
+    """
+    from frappe.utils import format_datetime
+
+    def esc(value):
+        if value is None:
+            return ""
+        return frappe.utils.escape_html(str(value))
+
+    status_color = {
+        "Draft": "#6C7A89",
+        "Proposed": "#8C6D1F",
+        "Allocated": "#1F4E79",
+        "Executed": "#2E7D32",
+        "Closed": "#3B3B3B",
+    }.get(plan.status or "", "#3B3B3B")
+
+    item_rows = []
+    for i, it in enumerate(items, start=1):
+        uat_oat = ", ".join([t for t in (("UAT" if it.needs_uat else None), ("OAT" if it.needs_oat else None)) if t]) or "—"
+        promoted = f"{it.promoted_to_doctype} {it.promoted_to_name}" if it.promoted_to_name else "Not yet promoted"
+        item_rows.append(f"""
+          <tr>
+            <td class="num">{i}</td>
+            <td class="type">{esc(it.item_type)}</td>
+            <td class="title"><b>{esc(it.title)}</b><div class="desc">{esc(it.description or "")}</div></td>
+            <td class="hint">{esc(it.assignee_hint or "—")}</td>
+            <td class="tests">{uat_oat}</td>
+            <td class="promoted">{esc(promoted)}</td>
+          </tr>
+        """)
+
+    description_html = (esc(plan.description or "")).replace("\n\n", "</p><p>").replace("\n", "<br/>")
+    if description_html:
+        description_html = f"<p>{description_html}</p>"
+
+    return f"""
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<title>{esc(plan.plan_id)} — {esc(plan.title)}</title>
+<style>
+  @page {{ size: A4; margin: 18mm 16mm 18mm 16mm; }}
+  body {{ font-family: 'Helvetica', 'Arial', sans-serif; font-size: 14pt; color: #1A1A1A; line-height: 1.45; }}
+  .stripe {{ height: 6px; background: #1F4E79; margin: 0 0 14px 0; }}
+  .masthead {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }}
+  .masthead .brand {{ font-size: 11pt; letter-spacing: 1.5px; color: #1F4E79; font-weight: 700; }}
+  .masthead .id {{ font-size: 11pt; color: #6C7A89; font-family: 'Menlo', 'Consolas', monospace; }}
+  h1 {{ font-size: 24pt; margin: 0 0 4px 0; color: #1F4E79; line-height: 1.1; }}
+  .subtitle {{ color: #6C7A89; font-size: 11pt; margin-bottom: 18px; }}
+  .meta {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 18px; padding: 12px 14px; background: #F4F6F9; border-left: 4px solid #1F4E79; border-radius: 4px; margin-bottom: 18px; }}
+  .meta div span {{ display: block; font-size: 9pt; color: #6C7A89; text-transform: uppercase; letter-spacing: 0.5px; }}
+  .meta div b {{ font-size: 12pt; color: #1A1A1A; }}
+  .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 999px; background: {status_color}; color: white; font-size: 10pt; font-weight: 600; letter-spacing: 0.4px; }}
+  h2 {{ font-size: 14pt; color: #1F4E79; border-bottom: 1px solid #1F4E79; padding-bottom: 4px; margin: 24px 0 10px 0; }}
+  .desc-block p {{ margin: 6px 0; }}
+  table {{ width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11pt; }}
+  th {{ background: #1F4E79; color: white; text-align: left; padding: 7px 9px; font-size: 10pt; font-weight: 600; letter-spacing: 0.4px; }}
+  td {{ padding: 8px 9px; border-bottom: 1px solid #E1E5EA; vertical-align: top; }}
+  td.num {{ width: 22px; color: #6C7A89; font-family: 'Menlo', 'Consolas', monospace; }}
+  td.type {{ width: 88px; color: #1F4E79; font-weight: 600; }}
+  td.hint {{ width: 70px; font-style: italic; color: #555C66; }}
+  td.tests {{ width: 70px; font-size: 10pt; color: #2E7D32; font-weight: 600; }}
+  td.promoted {{ width: 130px; font-size: 9pt; color: #6C7A89; font-family: 'Menlo', 'Consolas', monospace; }}
+  td .desc {{ color: #555C66; font-size: 10pt; margin-top: 3px; }}
+  .footer {{ position: fixed; bottom: 8mm; left: 16mm; right: 16mm; border-top: 1px solid #E1E5EA; padding-top: 4mm; font-size: 9pt; color: #6C7A89; display: flex; justify-content: space-between; }}
+</style>
+</head>
+<body>
+  <div class="stripe"></div>
+  <div class="masthead">
+    <div>
+      <div class="brand">VIMIT CONVERTERS · PMO</div>
+      <h1>{esc(plan.title or plan.plan_id)}</h1>
+      <div class="subtitle">Project: <b>{esc(project.project_name)}</b> ({esc(project.project_id)})</div>
+    </div>
+    <div class="id">{esc(plan.plan_id)}</div>
+  </div>
+
+  <div class="meta">
+    <div><span>Status</span><b><span class="status-pill">{esc(plan.status)}</span></b></div>
+    <div><span>Planner</span><b>{esc(plan.planner or '—')}</b></div>
+    <div><span>Created</span><b>{esc(format_datetime(plan.created_at) if plan.created_at else '—')}</b></div>
+    <div><span>Proposed Items</span><b>{len(items)}</b></div>
+    <div><span>Approved By</span><b>{esc(plan.approved_by or '—')}</b></div>
+    <div><span>Approved At</span><b>{esc(format_datetime(plan.approved_at) if plan.approved_at else '—')}</b></div>
+  </div>
+
+  <h2>Plan Description</h2>
+  <div class="desc-block">{description_html or '<p><i>No description provided.</i></p>'}</div>
+
+  <h2>Proposed Items</h2>
+  <table>
+    <thead><tr><th>#</th><th>Type</th><th>Title &amp; Description</th><th>Hint</th><th>Tests</th><th>Promoted</th></tr></thead>
+    <tbody>
+      {''.join(item_rows) or '<tr><td colspan="6" style="color:#6C7A89; font-style:italic;">No items proposed yet.</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>VCL PMO · {esc(plan.plan_id)}</span>
+    <span>Generated {esc(format_datetime(now_datetime()))}</span>
+  </div>
+</body></html>
+"""
+
+
+def _render_plan_pdf(plan_id):
+    """Build the VCL-branded plan PDF and return (filename, pdf_bytes)."""
+    from frappe.utils.pdf import get_pdf
+
+    name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    plan = frappe.get_doc("PMO Plan", name)
+    project = frappe.get_doc("PMO Project", plan.project)
+    items = list(plan.proposed_items or [])
+    html = _vcl_brand_html(plan, items, project)
+    pdf = get_pdf(html, {
+        "page-size": "A4",
+        "encoding": "UTF-8",
+        "margin-top": "10mm",
+        "margin-bottom": "14mm",
+        "margin-left": "10mm",
+        "margin-right": "10mm",
+        "print-media-type": None,
+    })
+    safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in (plan.title or "plan"))[:60]
+    filename = f"{plan.plan_id}_{safe_title}.pdf"
+    return filename, pdf
+
+
+@frappe.whitelist()
+def send_plan_to_slack(plan_id, channel=None, comment=None):
+    """Render a PMO Plan as a VCL-branded PDF and upload it to Slack.
+
+    site_config keys:
+      pmo_slack_bot_token       (required)  xoxb token
+      pmo_slack_plans_channel   (optional)  defaults to PMO_SLACK_DEFAULT_CHANNEL
+    """
+    _require_pmo_user()
+    import requests
+
+    token = frappe.conf.get("pmo_slack_bot_token")
+    if not token:
+        frappe.throw("pmo_slack_bot_token not set in site_config.json. Add an xoxb bot token with chat:write and files:write scopes.")
+    channel_id = channel or frappe.conf.get("pmo_slack_plans_channel") or PMO_SLACK_DEFAULT_CHANNEL
+
+    filename, pdf_bytes = _render_plan_pdf(plan_id)
+    name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    plan = frappe.get_doc("PMO Plan", name)
+    title = f"{plan.plan_id} — {plan.title}"
+
+    # Step 1: request upload URL.
+    r1 = requests.post(
+        "https://slack.com/api/files.getUploadURLExternal",
+        headers={"Authorization": f"Bearer {token}"},
+        data={"filename": filename, "length": len(pdf_bytes)},
+        timeout=15,
+    )
+    j1 = r1.json()
+    if not j1.get("ok"):
+        return {"ok": False, "step": "getUploadURL", "error": j1.get("error"), "raw": j1}
+    upload_url = j1["upload_url"]
+    file_id = j1["file_id"]
+
+    # Step 2: PUT the PDF bytes to the upload URL.
+    r2 = requests.post(upload_url, data=pdf_bytes, headers={"Content-Type": "application/octet-stream"}, timeout=30)
+    if r2.status_code >= 400:
+        return {"ok": False, "step": "upload", "status": r2.status_code, "body": (r2.text or "")[:500]}
+
+    # Step 3: complete upload + share to channel with a caption.
+    initial_comment = comment or f":memo: New PMO Plan ready — *{plan.title}* ({plan.plan_id}) for project {plan.project}.\nStatus: {plan.status}. Open it in PMO: https://vimitconverters.frappe.cloud/app/pmo"
+    payload = {
+        "files": json.dumps([{"id": file_id, "title": title}]),
+        "channel_id": channel_id,
+        "initial_comment": initial_comment,
+    }
+    r3 = requests.post(
+        "https://slack.com/api/files.completeUploadExternal",
+        headers={"Authorization": f"Bearer {token}"},
+        data=payload,
+        timeout=15,
+    )
+    j3 = r3.json()
+    if not j3.get("ok"):
+        return {"ok": False, "step": "completeUpload", "error": j3.get("error"), "raw": j3}
+
+    permalink = None
+    files = j3.get("files") or []
+    if files:
+        permalink = files[0].get("permalink")
+    return {"ok": True, "plan": plan.plan_id, "channel": channel_id, "file_id": file_id, "permalink": permalink, "filename": filename}
