@@ -40,7 +40,7 @@
       "fieldname": "status",
       "label": "Status",
       "fieldtype": "Select",
-      "options": "Draft\nProposed\nAllocated\nExecuted\nClosed",
+      "options": "Draft\nProposed\nApproved\nAllocated\nExecuted\nClosed",
       "default": "Draft"
     },
     {

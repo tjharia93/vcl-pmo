@@ -570,12 +570,81 @@ def add_plan_items(plan_id, items=None):
 
 
 @frappe.whitelist()
+def create_plan_from_notes(note_ids, project_id, title=None, description="", post_to_slack=0, channel=None):
+    """Create one proposed Codex plan from one or more PMO Notes.
+
+    Notes stay as the intake audit trail. Each selected note becomes a Shift
+    proposal; shifts are only created later by allocate_plan_items after an
+    explicit approve_plan call.
+    """
+    _require_pmo_user()
+    if isinstance(note_ids, str):
+        note_ids = json.loads(note_ids)
+    note_ids = list(dict.fromkeys(note_ids or []))
+    if not note_ids:
+        frappe.throw("Select at least one PMO Note")
+    project_name = _project_name(project_id)
+    if not frappe.db.exists("PMO Project", project_name):
+        frappe.throw(f"PMO Project not found: {project_id}")
+    notes = []
+    for note_id in note_ids:
+        if not frappe.db.exists("PMO Note", note_id):
+            frappe.throw(f"PMO Note not found: {note_id}")
+        notes.append(frappe.get_doc("PMO Note", note_id))
+    plan_title = title or (notes[0].title if len(notes) == 1 else f"Codex intake: {len(notes)} grouped notes")
+    note_summary = "\n\n".join(f"## {note.name} - {note.title}\n{note.content_md}" for note in notes)
+    plan_description = (description or "Grouped PMO Note intake for Codex planning.").rstrip()
+    plan_description += f"\n\n# Source notes\n{note_summary}"
+    result = create_plan(project_name, plan_title, plan_description, [
+        {
+            "item_type": "Shift",
+            "title": note.title,
+            "description": note.content_md,
+            "metadata": {"source_note": note.name, "source": "PMO Notes"},
+            "needs_uat": 1,
+            "needs_oat": 1,
+            "assignee_hint": "codex",
+        }
+        for note in notes
+    ])
+    plan = frappe.get_doc("PMO Plan", result["name"])
+    plan.status = "Proposed"
+    plan.save(ignore_permissions=False)
+    for note in notes:
+        note.project = project_name
+        note.status = "Converted"
+        note.content_md = (note.content_md or "").rstrip() + f"\n\nConverted to Codex plan `{plan.plan_id}`."
+        note.save(ignore_permissions=False)
+    slack = None
+    if int(post_to_slack or 0):
+        slack = send_plan_to_slack(plan.plan_id, channel=channel)
+    return {"ok": True, "plan_id": plan.plan_id, "name": plan.name, "notes": note_ids, "slack": slack}
+
+
+@frappe.whitelist()
+def approve_plan(plan_id):
+    """Record explicit human approval. Allocation into shifts is gated on this."""
+    _require_pmo_user()
+    plan_name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
+    plan = frappe.get_doc("PMO Plan", plan_name)
+    if plan.approved_at:
+        return {"ok": True, "plan": plan.name, "plan_id": plan.plan_id, "status": plan.status, "already_approved": True}
+    plan.approved_by = frappe.session.user
+    plan.approved_at = now_datetime()
+    plan.status = "Approved"
+    plan.save(ignore_permissions=False)
+    return {"ok": True, "plan": plan.name, "plan_id": plan.plan_id, "status": plan.status, "approved_by": plan.approved_by, "approved_at": plan.approved_at}
+
+
+@frappe.whitelist()
 def allocate_plan_items(plan_id, item_indices=None, assignee=None, planned_start=None, planned_end=None):
     _require_pmo_user()
     if isinstance(item_indices, str):
         item_indices = json.loads(item_indices)
     plan_name = frappe.db.get_value("PMO Plan", {"plan_id": plan_id}, "name") or plan_id
     plan = frappe.get_doc("PMO Plan", plan_name)
+    if not plan.approved_at:
+        frappe.throw(f"Plan {plan.plan_id} must be explicitly approved before shifts or other implementation records can be created.")
     project_name = plan.project
     indices = set(int(i) for i in (item_indices or []))
     created = []
@@ -610,7 +679,7 @@ def allocate_plan_items(plan_id, item_indices=None, assignee=None, planned_start
                 updates["oat_check"] = oat_check
             frappe.db.set_value("PMO Shift", spawned["name"], updates)
         created.append({**spawned, "uat_case": uat_case, "oat_check": oat_check})
-    if created and plan.status in {"Draft", "Proposed"}:
+    if created and plan.status in {"Draft", "Proposed", "Approved"}:
         plan.status = "Allocated"
     plan.save(ignore_permissions=False)
     return {"ok": True, "plan": plan.name, "created": created}
@@ -847,6 +916,10 @@ def dispatch_shift(shift_id, set_in_progress=True):
 
     name = frappe.db.get_value("PMO Shift", {"shift_id": shift_id}, "name") or shift_id
     shift = frappe.get_doc("PMO Shift", name)
+    if shift.linked_plan:
+        plan = frappe.get_doc("PMO Plan", shift.linked_plan)
+        if not plan.approved_at:
+            frappe.throw(f"Plan {plan.plan_id} must be explicitly approved before a linked shift can be dispatched.")
     url = frappe.conf.get("pmo_n8n_dispatch_url")
     if not url:
         frappe.throw("pmo_n8n_dispatch_url not configured in site_config.json. Set it to the n8n webhook URL that should receive shift dispatches.")

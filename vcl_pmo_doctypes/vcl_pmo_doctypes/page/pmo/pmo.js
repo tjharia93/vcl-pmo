@@ -260,6 +260,7 @@ class VCLPMOPage {
     if (name === "new-note") return this.modalNote();
     if (name === "assign-note") return this.assignNote(el.dataset.note);
     if (name === "archive-note") return this.archiveNote(el.dataset.note);
+    if (name === "notes-to-codex-plan") return this.modalNotesToCodexPlan();
     if (name === "new-requirement") return this.modalRequirement();
     if (name === "back-portfolio") return this.setPortfolioView("projects");
     if (name === "back-project") return this.openProject(this.state.project, this.state.subtab || "plans");
@@ -278,6 +279,7 @@ class VCLPMOPage {
     if (name === "block-shift") return this.modalBlockShift(el.dataset.shift);
     if (name === "dispatch-shift") return this.dispatchShift(el.dataset.shift);
     if (name === "send-plan-slack") return this.sendPlanToSlack(el.dataset.plan);
+    if (name === "approve-plan") return this.approvePlan(el.dataset.plan);
     if (name === "open-desk") return window.open(`/app/${encodeURIComponent(el.dataset.doctype.toLowerCase().replaceAll(" ", "-"))}/${encodeURIComponent(el.dataset.name)}`, "_blank");
     if (name === "close-overlay") return this.closeOverlay();
   }
@@ -406,12 +408,12 @@ class VCLPMOPage {
     const sorted = projectId ? rows.filter(n => n.project === projectId && n.status !== "Inbox") : rows.filter(n => n.project && n.status !== "Inbox");
     const title = projectId ? "Project Notes" : "Notes Inbox";
     const sub = projectId ? "Notes assigned to this project plus unsorted inbox notes" : "Capture loose notes, then assign them to a PMO project";
-    this.$body.html(`${this.head(title, sub)}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-note">New Note</button></div><h3>Inbox</h3>${this.noteList(inbox, true)}<h3>Sorted</h3>${this.noteList(sorted, false)}`);
+    this.$body.html(`${this.head(title, sub)}<div class="pmo-actions"><button class="pmo-btn primary" data-action="new-note">New Note</button><button class="pmo-btn sage" data-action="notes-to-codex-plan">Send selected to Codex plan</button></div><div class="pmo-card pmo-muted">Select one or more notes, create one grouped project plan, approve the plan, then schedule Codex shifts.</div><h3>Inbox</h3>${this.noteList(inbox, true)}<h3>Sorted</h3>${this.noteList(sorted, false)}`);
   }
 
   noteList(rows, sortable) {
     if (!rows.length) return "<div class='pmo-card pmo-muted'>No notes here.</div>";
-    return `<div class="pmo-list">${rows.map(n => `<div class="pmo-card"><div class="pmo-card-title">${this.esc(n.title)}</div><div class="pmo-muted pmo-mono">${this.esc(n.name)} · ${this.esc(n.note_type || "General")} · ${this.esc(n.status || "Inbox")}</div><div class="pmo-markdown">${this.renderMD((n.content_md || "").slice(0, 700))}</div><div class="pmo-actions"><select data-note-project="${n.name}"><option value="">Unassigned</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === n.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select><button class="pmo-btn primary" data-action="assign-note" data-note="${n.name}">${sortable ? "Sort" : "Move"}</button><button class="pmo-btn" data-action="archive-note" data-note="${n.name}">Archive</button><button class="pmo-btn" data-action="open-desk" data-doctype="PMO Note" data-name="${n.name}">Open in Desk</button></div></div>`).join("")}</div>`;
+    return `<div class="pmo-list">${rows.map(n => `<div class="pmo-card"><div class="pmo-card-title"><label><input type="checkbox" class="pmo-note-check" data-note="${this.esc(n.name)}"> ${this.esc(n.title)}</label></div><div class="pmo-muted pmo-mono">${this.esc(n.name)} · ${this.esc(n.note_type || "General")} · ${this.esc(n.status || "Inbox")}</div><div class="pmo-markdown">${this.renderMD((n.content_md || "").slice(0, 700))}</div><div class="pmo-actions"><select data-note-project="${n.name}"><option value="">Unassigned</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === n.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select><button class="pmo-btn primary" data-action="assign-note" data-note="${n.name}">${sortable ? "Sort" : "Move"}</button><button class="pmo-btn" data-action="archive-note" data-note="${n.name}">Archive</button><button class="pmo-btn" data-action="open-desk" data-doctype="PMO Note" data-name="${n.name}">Open in Desk</button></div></div>`).join("")}</div>`;
   }
 
   renderDocumentation(projectId) {
@@ -497,6 +499,20 @@ class VCLPMOPage {
   modalNote() { this.modal("New Note", `<div class="pmo-form-grid"><label class="span2">Title<input data-field="title"></label><label>Project<select data-field="project"><option value="">Inbox / unsorted</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === this.state.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Type<select data-field="note_type"><option>General</option><option>Idea</option><option>Issue</option><option>Decision</option><option>Meeting</option><option>Follow-up</option></select></label><label class="span2">Note<textarea data-field="content_md" rows="7"></textarea></label></div>`, async () => { const v = this.formValues(); await this.call("vcl_pmo_doctypes.api.create_note", { title: v.title, content_md: v.content_md, project_id: v.project || null, note_type: v.note_type }); this.closeOverlay(); await this.refresh(); }); }
   async assignNote(name) { const project = this.$body.find(`[data-note-project="${name}"]`).val() || null; await this.call("vcl_pmo_doctypes.api.assign_note", { note_id: name, project_id: project }); await this.refresh(); }
   async archiveNote(name) { await this.call("vcl_pmo_doctypes.api.assign_note", { note_id: name, status: "Archived" }); await this.refresh(); }
+  modalNotesToCodexPlan() {
+    const noteIds = [];
+    this.$body.find(".pmo-note-check:checked").each((_, el) => noteIds.push(el.dataset.note));
+    if (!noteIds.length) { frappe.show_alert({ message: "Select at least one note", indicator: "amber" }); return; }
+    this.modal("Create grouped Codex plan", `<div class="pmo-form-grid"><label>Project<select data-field="project"><option value="">Select project</option>${this.state.projects.map(p => `<option value="${p.name}" ${p.name === this.state.project ? "selected" : ""}>${this.esc(p.project_id || p.name)} · ${this.esc(p.project_name || p.name)}</option>`).join("")}</select></label><label>Selected notes<input value="${noteIds.length}" disabled></label><label class="span2">Plan title<input data-field="title" placeholder="Optional grouped-plan title"></label><label class="span2">Planning instructions<textarea data-field="description" rows="4" placeholder="Optional scope or acceptance guidance for Codex"></textarea></label></div>`, async () => {
+      const v = this.formValues();
+      if (!v.project) { frappe.show_alert({ message: "Choose a project", indicator: "amber" }); return; }
+      const result = await this.call("vcl_pmo_doctypes.api.create_plan_from_notes", { note_ids: JSON.stringify(noteIds), project_id: v.project, title: v.title || null, description: v.description || "", post_to_slack: 0 });
+      this.closeOverlay();
+      await this.openProject(v.project, "plans");
+      await this.openPlan(result.plan_id);
+      frappe.show_alert({ message: `Created ${result.plan_id}. Review and approve before allocating shifts.`, indicator: "green" }, 10);
+    });
+  }
   modalDocument() { this.modal("New Document", `<div class="pmo-form-grid"><label>ID<input data-field="document_id"></label><label>Type<select data-field="doc_type"><option>How-to</option><option>Workflow</option><option>SOP</option><option>Spec</option><option>Brief</option><option>Decision Log</option></select></label><label class="span2">Title<input data-field="title"></label><label class="span2">Markdown<textarea data-field="content_md"></textarea></label></div>`, async () => { const doc = this.formDoc("PMO Document"); doc.project = this.state.project || null; doc.status = "Draft"; await frappe.db.insert(doc); this.closeOverlay(); await this.refresh(); }); }
   formValues() { const values = {}; this.$overlay.find("[data-field]").each((_, el) => values[el.dataset.field] = $(el).val()); return values; }
   formDoc(doctype) { return Object.assign({ doctype }, this.formValues()); }
@@ -560,7 +576,9 @@ class VCLPMOPage {
     const items = detail.items;
     this.$root.find("[data-tabs]").html("");
     const checkboxes = items.map((it, i) => `<tr><td><input type="checkbox" class="pmo-plan-check" data-idx="${i}" ${it.promoted_to_doctype ? "disabled" : ""}></td><td class="pmo-mono">${this.esc(it.item_type)}</td><td>${this.esc(it.title)}</td><td>${this.esc((it.description || "").slice(0, 80))}</td><td>${it.needs_uat ? "✓" : ""}</td><td>${it.needs_oat ? "✓" : ""}</td><td>${this.esc(it.assignee_hint || "")}</td><td>${it.promoted_to_doctype ? `${this.esc(it.promoted_to_doctype)}<br><span class="pmo-mono">${this.esc(it.promoted_to_name)}</span>` : "<span class='pmo-muted'>not allocated</span>"}</td></tr>`).join("");
-    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Plans", plan.plan_id])}${this.head(plan.title || plan.plan_id, `${plan.status} · ${items.length} proposed item${items.length === 1 ? "" : "s"}`)}<div class="pmo-card pmo-markdown">${this.renderMD(plan.description || "No description.")}</div><div class="pmo-actions"><button class="pmo-btn primary" data-action="add-plan-item" data-plan="${plan.plan_id}">Add Item</button><button class="pmo-btn" data-action="send-plan-slack" data-plan="${plan.plan_id}" title="Render plan as VCL-branded PDF and post to #ai-pmo-plans">Send PDF to Slack</button><button class="pmo-btn" data-action="allocate-claude" data-plan="${plan.plan_id}">Allocate selected to Claude</button><button class="pmo-btn" data-action="allocate-codex" data-plan="${plan.plan_id}">Allocate selected to Codex</button><button class="pmo-btn" data-action="allocate-human" data-plan="${plan.plan_id}">Allocate selected to Human</button></div><table class="pmo-table"><thead><tr><th><input type="checkbox" id="pmo-plan-check-all"></th><th>Type</th><th>Title</th><th>Description</th><th>UAT</th><th>OAT</th><th>Hint</th><th>Promoted</th></tr></thead><tbody>${checkboxes || "<tr><td colspan='8' class='pmo-muted'>No items. Click Add Item to start.</td></tr>"}</tbody></table>`);
+    const approved = Boolean(plan.approved_at);
+    const gated = approved ? "" : " disabled title=\"Approve the plan before scheduling shifts\"";
+    this.$body.html(`${this.breadcrumb(["Portfolio", this.state.project, "Plans", plan.plan_id])}${this.head(plan.title || plan.plan_id, `${plan.status} · ${items.length} proposed item${items.length === 1 ? "" : "s"}`)}<div class="pmo-card pmo-markdown">${this.renderMD(plan.description || "No description.")}</div><div class="pmo-card ${approved ? "" : "pmo-muted"}"><b>Approval gate:</b> ${approved ? `Approved by ${this.esc(plan.approved_by || "PMO user")} at ${this.date(plan.approved_at)}. Shift planning is unlocked.` : "Review this plan and approve it before sending the PDF to Slack or scheduling shifts."}</div><div class="pmo-actions"><button class="pmo-btn primary" data-action="add-plan-item" data-plan="${plan.plan_id}">Add Item</button>${approved ? "" : `<button class="pmo-btn sage" data-action="approve-plan" data-plan="${plan.plan_id}">Approve Plan</button>`}<button class="pmo-btn" data-action="send-plan-slack" data-plan="${plan.plan_id}"${gated}>Send approved PDF to Slack</button><button class="pmo-btn" data-action="allocate-claude" data-plan="${plan.plan_id}"${gated}>Allocate selected to Claude</button><button class="pmo-btn" data-action="allocate-codex" data-plan="${plan.plan_id}"${gated}>Allocate selected to Codex</button><button class="pmo-btn" data-action="allocate-human" data-plan="${plan.plan_id}"${gated}>Allocate selected to Human</button></div><table class="pmo-table"><thead><tr><th><input type="checkbox" id="pmo-plan-check-all"></th><th>Type</th><th>Title</th><th>Description</th><th>UAT</th><th>OAT</th><th>Hint</th><th>Promoted</th></tr></thead><tbody>${checkboxes || "<tr><td colspan='8' class='pmo-muted'>No items. Click Add Item to start.</td></tr>"}</tbody></table>`);
     this.$body.find("#pmo-plan-check-all").on("change", (e) => {
       const checked = e.currentTarget.checked;
       this.$body.find(".pmo-plan-check:not(:disabled)").prop("checked", checked);
@@ -654,6 +672,13 @@ class VCLPMOPage {
     else frappe.show_alert({ message: `Dispatch failed: ${(result && result.error) || "unknown"}`, indicator: "red" });
     await this.loadProject(this.state.project);
     this.render();
+  }
+
+  async approvePlan(planId) {
+    const result = await this.call("vcl_pmo_doctypes.api.approve_plan", { plan_id: planId });
+    frappe.show_alert({ message: `${result.plan_id || planId} approved. Shift planning is unlocked.`, indicator: "green" }, 10);
+    await this.loadProject(this.state.project);
+    await this.openPlan(planId);
   }
 
   async sendPlanToSlack(planId) {
